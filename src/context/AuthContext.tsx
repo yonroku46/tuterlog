@@ -64,7 +64,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
-  const refreshGoogleAccessToken = async (uid: string) => {
+  const refreshGoogleAccessToken = React.useCallback(async (uid: string) => {
     try {
       const configDocRef = doc(db, "users", uid, "customers", "config");
       const configDoc = await getDoc(configDocRef);
@@ -89,7 +89,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       console.error("Token refresh failed:", error);
       return null;
     }
-  };
+  }, []);
 
   const updateFilterKeyword = async (keyword: string) => {
     if (!user || !user.uid) return;
@@ -104,11 +104,32 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
+  const isRefreshing = React.useRef(false);
+
   useEffect(() => {
     const savedToken = localStorage.getItem('googleAccessToken');
     if (savedToken) setGoogleAccessToken(savedToken);
 
-    const handleSessionExpired = () => {
+    const handleSessionExpired = async () => {
+      // If we are already refreshing, don't start another one
+      if (isRefreshing.current) return;
+
+      // If we have a user, try to refresh the Google token first
+      if (auth.currentUser) {
+        isRefreshing.current = true;
+        try {
+          console.log("Google session expired. Attempting refresh...");
+          const refreshed = await refreshGoogleAccessToken(auth.currentUser.uid);
+          if (refreshed) {
+            console.log("Token refreshed successfully. Resuming session.");
+            return;
+          }
+        } finally {
+          isRefreshing.current = false;
+        }
+      }
+      
+      console.warn("Session truly expired or refresh failed. Logging out.");
       logout();
       router.push("/");
     };
@@ -140,7 +161,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       unsubscribe();
       window.removeEventListener('auth-session-expired', handleSessionExpired);
     };
-  }, [router, user]);
+  }, [router, refreshGoogleAccessToken]);
 
   return (
     <AuthContext.Provider value={{ user, loading, googleAccessToken, filterKeyword, loginWithGoogle, logout, updateFilterKeyword, refreshGoogleAccessToken }}>

@@ -46,7 +46,12 @@ export const googleCalendarService = {
       headers: { 'Authorization': `Bearer ${accessToken}` }
     });
 
-    if (!response.ok) return 0;
+    if (!response.ok) {
+      if (response.status === 401) {
+        window.dispatchEvent(new CustomEvent('auth-session-expired'));
+      }
+      return 0;
+    }
     const data = await response.json();
     const items = data.items || [];
 
