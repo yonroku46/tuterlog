@@ -1,33 +1,35 @@
 "use client";
 
 import React, { useState, useEffect } from 'react';
-import { Plus, Search, Filter, MoreVertical, Mail, Phone, X, Edit2, Trash2, FileText } from 'lucide-react';
+import { Plus, Search, Filter, MoreVertical, Mail, Phone, X, Edit2, Trash2, FileText, Calendar, Clock, ChevronUp, ChevronDown, ArrowUpDown } from 'lucide-react';
 import { createPortal } from 'react-dom';
 import { useAuth } from '@/hooks/useAuth';
 import { useRouter } from 'next/navigation';
 import "@/styles/pages/customers.scss";
 import "@/styles/pages/dashboard.scss";
-import { customerService, Customer } from '@/services/customerService';
+import { customerService, Customer, ClassSession } from '@/services/customerService';
 
 const CustomersPage = () => {
   const { user, loading: authLoading } = useAuth();
   const router = useRouter();
   const [customers, setCustomers] = useState<Customer[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [currentCustomer, setCurrentCustomer] = useState<Partial<Customer> | null>(null);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [activeMenuId, setActiveMenuId] = useState<string | null>(null);
+  const [menuPosition, setMenuPosition] = useState({ top: 0, left: 0 });
+  const [isHistoryModalOpen, setIsHistoryModalOpen] = useState(false);
+  const [historyData, setHistoryData] = useState<ClassSession[]>([]);
+  const [historyCustomer, setHistoryCustomer] = useState<Customer | null>(null);
+  const [isHistoryLoading, setIsHistoryLoading] = useState(false);
+  const [sortConfig, setSortConfig] = useState<{ key: string; direction: 'asc' | 'desc' } | null>({ key: 'date', direction: 'desc' });
 
   useEffect(() => {
     if (!authLoading && !user) {
       router.push("/");
     }
   }, [user, authLoading, router]);
-
-  if (authLoading || !user) return null;
-
-  const [isModalOpen, setIsModalOpen] = useState(false);
-  const [currentCustomer, setCurrentCustomer] = useState<Partial<Customer> | null>(null);
-  const [searchTerm, setSearchTerm] = useState('');
-  const [activeMenuId, setActiveMenuId] = useState<string | null>(null);
-  const [menuPosition, setMenuPosition] = useState({ top: 0, left: 0 });
 
   useEffect(() => {
     const handleOutsideClick = () => setActiveMenuId(null);
@@ -88,6 +90,98 @@ const CustomersPage = () => {
     }
   };
 
+  const handleViewHistory = async (customer: Customer) => {
+    if (!user || !customer.id) return;
+    setHistoryCustomer(customer);
+    setIsHistoryModalOpen(true);
+    setIsHistoryLoading(true);
+    try {
+      const data = await customerService.getClassHistory(user.uid, customer.id);
+      setHistoryData(data);
+    } catch (error) {
+      console.error("Error fetching class history:", error);
+    } finally {
+      setIsHistoryLoading(false);
+    }
+  };
+
+  const handleDeleteSession = async (sessionId: string) => {
+    if (!user || !historyCustomer?.id || !window.confirm('기록 삭제 시 복구가 불가능합니다. 정말 삭제하시겠습니까?')) return;
+    
+    try {
+      await customerService.deleteClassSession(user.uid, historyCustomer.id, sessionId);
+      const data = await customerService.getClassHistory(user.uid, historyCustomer.id);
+      setHistoryData(data);
+      fetchCustomers();
+      setHistoryCustomer({
+        ...historyCustomer,
+        totalSessions: (historyCustomer.totalSessions || 1) - 1
+      });
+    } catch (error) {
+      console.error("Error deleting session:", error);
+      alert("삭제 중 오류가 발생했습니다.");
+    }
+  };
+
+  const formatShortDate = (dateStr: string) => {
+    if (!dateStr) return '';
+    const date = new Date(dateStr);
+    return `${date.getMonth() + 1}/${date.getDate()}`;
+  };
+
+  const formatSessionTime = (dateStr: string) => {
+    if (!dateStr) return '';
+    const date = new Date(dateStr);
+    return date.toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit', hour12: false });
+  };
+
+  const requestSort = (key: string) => {
+    let direction: 'asc' | 'desc' = 'asc';
+    if (sortConfig && sortConfig.key === key && sortConfig.direction === 'asc') {
+      direction = 'desc';
+    }
+    setSortConfig({ key, direction });
+  };
+
+  const getSortIcon = (key: string) => {
+    if (!sortConfig || sortConfig.key !== key) return <ArrowUpDown size={12} className="sort-icon inactive" />;
+    return sortConfig.direction === 'asc' ? <ChevronUp size={12} className="sort-icon active" /> : <ChevronDown size={12} className="sort-icon active" />;
+  };
+
+  const sortedCustomers = React.useMemo(() => {
+    const filtered = customers.filter(c => 
+      c.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      c.nickname.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      c.phone.includes(searchTerm) ||
+      (c.memo?.toLowerCase().includes(searchTerm.toLowerCase()))
+    );
+    
+    if (sortConfig !== null) {
+      filtered.sort((a: any, b: any) => {
+        const aValue = a[sortConfig.key] || '';
+        const bValue = b[sortConfig.key] || '';
+        if (aValue < bValue) return sortConfig.direction === 'asc' ? -1 : 1;
+        if (aValue > bValue) return sortConfig.direction === 'asc' ? 1 : -1;
+        return 0;
+      });
+    }
+    return filtered;
+  }, [customers, searchTerm, sortConfig]);
+
+  const sortedSessions = React.useMemo(() => {
+    const sortableSessions = [...historyData];
+    if (sortConfig !== null) {
+      sortableSessions.sort((a: any, b: any) => {
+        let aValue = a[sortConfig.key as keyof ClassSession] || '';
+        let bValue = b[sortConfig.key as keyof ClassSession] || '';
+        if (aValue < bValue) return sortConfig.direction === 'asc' ? -1 : 1;
+        if (aValue > bValue) return sortConfig.direction === 'asc' ? 1 : -1;
+        return 0;
+      });
+    }
+    return sortableSessions;
+  }, [historyData, sortConfig]);
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!user || !currentCustomer) return;
@@ -105,14 +199,7 @@ const CustomersPage = () => {
     }
   };
 
-  const filteredCustomers = customers.filter(c => 
-    c.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    c.nickname.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    c.phone.includes(searchTerm) ||
-    (c.memo?.toLowerCase().includes(searchTerm.toLowerCase()))
-  );
-
-  if (!user) return null;
+  if (authLoading || !user) return null;
 
   return (
     <div className="customers-content">
@@ -146,24 +233,35 @@ const CustomersPage = () => {
             <table className="customer-table">
               <thead>
                 <tr>
-                  <th>이름</th>
-                  <th>상세 정보</th>
-                  <th>상태</th>
-                  <th>등록일</th>
+                  <th onClick={() => requestSort('name')} className="sortable">
+                    <div className="th-content">이름 {getSortIcon('name')}</div>
+                  </th>
+                  <th onClick={() => requestSort('nickname')} className="sortable">
+                    <div className="th-content">상세 정보 {getSortIcon('nickname')}</div>
+                  </th>
+                  <th onClick={() => requestSort('totalSessions')} className="sortable">
+                    <div className="th-content">총 수업 {getSortIcon('totalSessions')}</div>
+                  </th>
+                  <th onClick={() => requestSort('status')} className="sortable">
+                    <div className="th-content">상태 {getSortIcon('status')}</div>
+                  </th>
+                  <th onClick={() => requestSort('date')} className="sortable">
+                    <div className="th-content">등록일 {getSortIcon('date')}</div>
+                  </th>
                   <th>작업</th>
                 </tr>
               </thead>
               <tbody>
                 {isLoading ? (
                   <tr>
-                    <td colSpan={5} style={{ textAlign: 'center', padding: '3rem' }}>로딩 중...</td>
+                    <td colSpan={6} style={{ textAlign: 'center', padding: '3rem' }}>로딩 중...</td>
                   </tr>
-                ) : filteredCustomers.length === 0 ? (
+                ) : sortedCustomers.length === 0 ? (
                   <tr>
-                    <td colSpan={5} style={{ textAlign: 'center', padding: '3rem' }}>고객 데이터가 없습니다.</td>
+                    <td colSpan={6} style={{ textAlign: 'center', padding: '3rem' }}>고객 데이터가 없습니다.</td>
                   </tr>
                 ) : (
-                  filteredCustomers.map((customer, index) => (
+                  sortedCustomers.map((customer, index) => (
                     <tr key={customer.id || index}>
                       <td>
                         <div className="name-cell">
@@ -186,11 +284,12 @@ const CustomersPage = () => {
                           <div className="contact-item">
                             <Phone size={12} /> {customer.phone}
                           </div>
-                          {customer.memo && (
-                            <div className="memo-preview" title={customer.memo}>
-                              {customer.memo.length > 20 ? customer.memo.substring(0, 20) + '...' : customer.memo}
-                            </div>
-                          )}
+                        </div>
+                      </td>
+                      <td>
+                        <div className="session-count">
+                          <Clock size={14} />
+                          <span>{customer.totalSessions || 0}회</span>
                         </div>
                       </td>
                       <td>
@@ -221,6 +320,9 @@ const CustomersPage = () => {
                             >
                               <button onClick={() => { handleEdit(customer); setActiveMenuId(null); }}>
                                 <Edit2 size={16} /> 수정하기
+                              </button>
+                              <button onClick={() => { handleViewHistory(customer); setActiveMenuId(null); }}>
+                                <Calendar size={16} /> 수업이력
                               </button>
                               <button className="delete" onClick={() => { customer.id && handleDelete(customer.id); setActiveMenuId(null); }}>
                                 <Trash2 size={16} /> 삭제하기
@@ -309,6 +411,51 @@ const CustomersPage = () => {
                 <button type="submit" className="btn-submit">저장</button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {isHistoryModalOpen && (
+        <div className="modal-overlay" onClick={() => setIsHistoryModalOpen(false)}>
+          <div className="modal-content history-modal" onClick={e => e.stopPropagation()}>
+            <button className="modal-close" onClick={() => setIsHistoryModalOpen(false)}><X size={20} /></button>
+            <div className="modal-header">
+              <div className="title-with-count">
+                <h2>수업 이력</h2>
+                <span className="count-badge">{historyCustomer?.totalSessions || 0}회 완료</span>
+              </div>
+              <p className="subtitle">{historyCustomer?.name} ({historyCustomer?.nickname}) 학생</p>
+            </div>
+            
+            <div className="history-list">
+              {isHistoryLoading ? (
+                <div className="loading-state">기록을 불러오는 중...</div>
+              ) : historyData.length === 0 ? (
+                <div className="empty-history">아직 기록된 수업이 없습니다.</div>
+              ) : (
+                historyData.map((session, idx) => (
+                  <div key={session.id || idx} className="history-item">
+                    <div className="history-date">
+                      <span className="m-d">{formatShortDate(session.startTime)}</span>
+                    </div>
+                    <div className="history-info">
+                      <div className="history-title">{session.eventTitle}</div>
+                      <div className="history-time">
+                        <Clock size={12} />
+                        <span>{formatSessionTime(session.startTime)} ~ {formatSessionTime(session.endTime)}</span>
+                      </div>
+                    </div>
+                    <button 
+                      className="session-delete-btn" 
+                      onClick={() => session.id && handleDeleteSession(session.id)}
+                      title="이력 삭제"
+                    >
+                      <Trash2 size={16} />
+                    </button>
+                  </div>
+                ))
+              )}
+            </div>
           </div>
         </div>
       )}

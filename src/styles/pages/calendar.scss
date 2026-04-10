@@ -324,12 +324,53 @@ $tablet: 768px;
         display: flex;
         gap: 1rem;
         padding: 1rem;
+        padding-left: 1.25rem;
         background: #f8fafc;
         border-radius: 1rem;
         border: 1px solid transparent;
         transition: all 0.2s;
+        position: relative;
 
         &.focused { border-color: $primary-color; background: white; box-shadow: 0 4px 12px rgba(99, 102, 241, 0.08); }
+
+        .customer-profile {
+          position: absolute;
+          bottom: 8px;
+          left: 8px;
+          z-index: 2;
+          display: flex;
+          align-items: center;
+          gap: 6px;
+          background: rgba(255, 255, 255, 0.9);
+          padding: 3px 10px 3px 4px;
+          border-radius: 2rem;
+          box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08), 0 1px 2px rgba(0, 0, 0, 0.04);
+          border: 1px solid rgba(226, 232, 240, 0.8);
+          backdrop-filter: blur(8px);
+          transition: all 0.2s;
+
+          .avatar-circle {
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, $primary-color, lighten($primary-color, 15%));
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.7rem;
+            font-weight: 900;
+            flex-shrink: 0;
+            border: 1px solid white;
+          }
+
+          .customer-nickname {
+            font-size: 0.75rem;
+            font-weight: 800;
+            color: #1e293b;
+            white-space: nowrap;
+          }
+        }
 
         .time-box {
           display: flex;
@@ -356,13 +397,49 @@ $tablet: 768px;
             background: #ecfdf5;
             border: 1px solid #a7f3d0;
             padding: 0.4rem 0.8rem;
-            border-radius: 2rem;
+            border-radius: 1rem;
             cursor: pointer;
             transition: all 0.2s;
             margin-top: 0.5rem;
             margin-left: auto;
-            
+
+            @include hover {
+              &:not(:disabled):hover {
+                background: #10b981;
+                color: white;
+                border-color: #10b981;
+                transform: translateY(-1px);
+                box-shadow: 0 4px 6px -1px rgba(16, 185, 129, 0.2);
+                svg { transform: scale(1.1); }
+              }
+            }
+
+            &:disabled {
+              background: #f1f5f9;
+              border-color: #e2e8f0;
+              color: #94a3b8;
+              cursor: not-allowed;
+              opacity: 0.7;
+            }
+
             svg { transition: transform 0.2s; }
+          }
+
+          .completed-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 0.75rem;
+            font-weight: 800;
+            color: $primary-color;
+            background: #f5f6ff;
+            border: 1px solid rgba(99, 102, 241, 0.2);
+            padding: 0.4rem 0.8rem;
+            border-radius: 1rem;
+            margin-top: 0.5rem;
+            margin-left: auto;
+            
+            svg { color: $primary-color; }
           }
         }
       }
@@ -389,14 +466,6 @@ $tablet: 768px;
     .calendar-main .calendar-grid .day-cell:hover { border-color: $primary-color; background: #fcfcff; }
     .agenda-sidebar .agenda-list .agenda-item {
       &:hover { border-color: $primary-color; background: white; transform: translateX(4px); }
-      .info-box .done-btn:hover {
-        background: #10b981;
-        color: white;
-        border-color: #10b981;
-        transform: translateY(-1px);
-        box-shadow: 0 4px 6px -1px rgba(16, 185, 129, 0.2);
-        svg { transform: scale(1.1); }
-      }
     }
   }
   .error-state-card .error-actions {

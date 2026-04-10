@@ -5,6 +5,8 @@ import { ChevronLeft, ChevronRight, RefreshCw, AlertCircle, CheckCircle, Externa
 import { useAuth } from '@/hooks/useAuth';
 import { useRouter } from 'next/navigation';
 import { googleCalendarService } from '@/services/googleCalendarService';
+import { customerService, Customer } from '@/services/customerService';
+import Image from 'next/image';
 import "@/styles/pages/calendar.scss";
 
 const CalendarPage = () => {
@@ -15,7 +17,9 @@ const CalendarPage = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [selectedDay, setSelectedDay] = useState<number | null>(new Date().getDate());
+  const [completedEventIds, setCompletedEventIds] = useState<string[]>([]);
   const [showPicker, setShowPicker] = useState(false);
+  const [customers, setCustomers] = useState<Customer[]>([]);
   const pickerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -92,26 +96,113 @@ const CalendarPage = () => {
     if (googleAccessToken) fetchGoogleEvents();
   }, [currentDate, googleAccessToken]);
 
-  const handleFinishClass = async (event: any) => {
+  useEffect(() => {
+    const fetchCustomers = async () => {
+      if (user?.uid) {
+        try {
+          const data = await customerService.getCustomers(user.uid);
+          setCustomers(data);
+        } catch (error) {
+          console.error("Failed to fetch customers:", error);
+        }
+      }
+    };
+    fetchCustomers();
+  }, [user]);
+
+  useEffect(() => {
+    const fetchCompletedSessions = async () => {
+      if (!user?.uid || !events[selectedDay || 0] || customers.length === 0) return;
+      
+      try {
+        const currentEvents = events[selectedDay || 0];
+        const completedIds: string[] = [];
+        
+        // Optimize: Only check customers who have events today
+        const todaysCustomers = customers.filter(c => 
+          currentEvents.some(e => e.summary?.includes(c.nickname))
+        );
+
+        for (const customer of todaysCustomers) {
+          if (!customer.id) continue;
+          const history = await customerService.getClassHistory(user.uid, customer.id);
+          // Match by googleEventId
+          history.forEach(session => {
+            if (session.googleEventId) {
+              completedIds.push(session.googleEventId);
+            }
+          });
+        }
+        
+        setCompletedEventIds(prev => {
+          // Merge and deduplicate
+          const combined = [...prev, ...completedIds];
+          return Array.from(new Set(combined));
+        });
+      } catch (error) {
+        console.error("Failed to fetch completed sessions:", error);
+      }
+    };
+    fetchCompletedSessions();
+  }, [selectedDay, user, events, customers]);
+
+  const handleFinishClass = async (event: any, customer?: Customer) => {
+    if (!customer || !customer.id) {
+      alert("매칭되는 고객이 없습니다. 수업 종료를 위해 먼저 고객 추가가 필요합니다.");
+      return;
+    }
+
     const shouldSendNoti = window.confirm(`[${event.summary}] 을 종료하시겠습니까?\n\n'확인'을 누르시면 종료 알림톡이 자동으로 발송됩니다.`);
     
+    // Core logic to record the session in DB
+    const recordSession = async () => {
+      try {
+        if (!user?.uid) return;
+        
+        await customerService.recordClassSession(user.uid, customer.id!, {
+          googleEventId: event.id,
+          eventTitle: event.summary || "제목 없음",
+          startTime: event.start?.dateTime || event.start?.date || new Date().toISOString(),
+          endTime: event.end?.dateTime || event.end?.date || new Date().toISOString()
+        });
+        
+        // Refresh customer list to update session counts on dashboard/sidebar if needed
+        const updatedCustomers = await customerService.getCustomers(user.uid);
+        setCustomers(updatedCustomers);
+        
+        return true;
+      } catch (error) {
+        console.error("Failed to record session:", error);
+        alert("수업 기록 저장 중 오류가 발생했습니다.");
+        return false;
+      }
+    };
+
     if (shouldSendNoti) {
       try {
         console.log('Sending AlimTalk notification via external API...');
-        // Mocking an external API call
-        // await fetch('https://api.your-alimtalk-service.com/send', { method: 'POST', ... });
-        await new Promise(resolve => setTimeout(resolve, 800)); // Simulate network dev
+        await new Promise(resolve => setTimeout(resolve, 800)); // Simulate network
         
-        alert(`알림톡 발송 완료! [${event.summary}] 수업이 성공적으로 종료 처리되었습니다.`);
+        const success = await recordSession();
+        if (success) {
+          alert(`알림톡 발송 완료! [${event.summary}] 수업이 성공적으로 종료 및 기록되었습니다.`);
+          return true;
+        }
       } catch (error) {
         console.error('Failed to send AlimTalk:', error);
-        alert('알림톡 발송 중 오류가 발생했지만, 수업 종료 처리는 진행됩니다.');
+        alert('알림톡 발송 중 오류가 발생했지만, 수업 정보를 기록합니다.');
+        return await recordSession();
       }
     } else {
       if (window.confirm('알림톡 없이 수업을 종료하시겠습니까?')) {
-        alert(`[${event.summary}] 수업이 종료되었습니다.`);
+        const success = await recordSession();
+        if (success) {
+          alert(`[${event.summary}] 수업 정보가 기록되었습니다.`);
+          return true;
+        }
       }
     }
+    return false;
   };
 
   const openGoogleCalendar = () => {
@@ -245,8 +336,31 @@ const CalendarPage = () => {
               ) : (
                 events[selectedDay].map((event, idx) => {
                   const isFocused = event.summary?.toLowerCase().includes(filterKeyword?.toLowerCase() || "");
+                  const matchingCustomer = customers.find(c => {
+                    if (!event.summary || !c.nickname) return false;
+                    return event.summary === c.nickname || 
+                           event.summary.startsWith(c.nickname + "와") || 
+                           event.summary.startsWith(c.nickname + "과") ||
+                           event.summary.startsWith(c.nickname + " ");
+                  });
+
+                  // We need to check if this event has been completed.
+                  // For simplicity, we can check if the customer's totalSessions count changed, 
+                  // but a better way is to check the actual sessions.
+                  // In a real app, we'd fetch the day's sessions. 
+                  // Let's assume we can check against a local state of completed IDs for now.
+                  const isCompleted = completedEventIds.includes(event.id);
+                  
                   return (
-                    <div key={idx} className={`agenda-item ${isFocused ? 'focused' : ''}`}>
+                    <div key={idx} className={`agenda-item ${isFocused ? 'focused' : ''} ${matchingCustomer ? 'has-customer' : ''} ${isCompleted ? 'completed' : ''}`}>
+                      {matchingCustomer && (
+                        <div className="customer-profile">
+                          <div className="avatar-circle">
+                            {matchingCustomer.name.charAt(0)}
+                          </div>
+                          <span className="customer-nickname">{matchingCustomer.nickname}</span>
+                        </div>
+                      )}
                       <div className="time-box">
                         <span className="start">{formatTime(event.start?.dateTime || event.start?.date)}</span>
                         <span className="end">~{formatTime(event.end?.dateTime || event.end?.date)}</span>
@@ -254,9 +368,24 @@ const CalendarPage = () => {
                       <div className="info-box">
                         <div className="summary">{event.summary}</div>
                         {event.summary?.includes(filterKeyword) && (
-                          <button className="done-btn" onClick={() => handleFinishClass(event)}>
-                            수업종료
-                          </button>
+                          isCompleted ? (
+                            <div className="completed-badge">
+                              <CheckCircle size={14} />
+                              <span>수업완료</span>
+                            </div>
+                          ) : (
+                            <button 
+                              className="done-btn" 
+                              onClick={() => {
+                                handleFinishClass(event, matchingCustomer).then(success => {
+                                  if (success) setCompletedEventIds(prev => [...prev, event.id]);
+                                });
+                              }}
+                              disabled={new Date() < new Date(event.end?.dateTime || event.end?.date || 0)}
+                            >
+                              수업종료
+                            </button>
+                          )
                         )}
                       </div>
                     </div>

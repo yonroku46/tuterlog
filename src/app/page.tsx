@@ -3,7 +3,7 @@
 import Image from 'next/image';
 import { useAuth } from '@/hooks/useAuth';
 import StatsCard from '@/components/dashboard/StatsCard';
-import CustomerTable from '@/components/dashboard/CustomerTable';
+import RecentHistoryTable from '@/components/dashboard/RecentHistoryTable';
 import { Users, Calendar, Coins, Plus, BarChart3 } from 'lucide-react';
 import { googleCalendarService } from '@/services/googleCalendarService';
 import { customerService } from '@/services/customerService';
@@ -107,14 +107,14 @@ export default function Home() {
           />
           <StatsCard 
             title="이번 주 스케줄" 
-            value={counts.weekly.toString()} 
+            value={`${counts.weekly.toString()}건`} 
             icon={<Calendar size={24} />} 
             trend="현재 기준" 
             trendUp={true} 
           />
           <StatsCard 
             title="이번 달 스케줄" 
-            value={counts.monthly.toString()} 
+            value={`${counts.monthly.toString()}건`} 
             icon={<BarChart3 size={24} />} 
             trend="현재 기준" 
             trendUp={true} 
@@ -129,7 +129,7 @@ export default function Home() {
         </section>
 
         <section className="section-container">
-          <CustomerTable />
+          <RecentHistoryTable />
         </section>
     </div>
   );
