@@ -1,0 +1,216 @@
+@use "../base/variables" as *;
+
+$mobile: 480px;
+$tablet: 768px;
+
+.customers-content {
+  padding: 1.5rem;
+  max-width: 1400px;
+  margin: 0 auto;
+  animation: fadeIn 0.4s ease-out;
+
+  @media (max-width: $tablet) { padding: 0; }
+
+  .header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 2rem;
+    
+    @media (max-width: $mobile) { flex-direction: column; align-items: flex-start; gap: 1rem; }
+
+    .title-area h1 { font-size: 1.75rem; font-weight: 800; color: $text-main; }
+
+    .btn-primary {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      padding: 0.75rem 1.5rem;
+      background: $primary-color;
+      color: white;
+      border: none;
+      border-radius: 0.75rem;
+      font-weight: 700;
+      transition: all 0.2s;
+      &:hover { background: darken($primary-color, 5%); transform: translateY(-1px); box-shadow: $shadow-md; }
+      @media (max-width: $mobile) { width: 100%; justify-content: center; }
+    }
+  }
+
+  .tools-bar {
+    background: white;
+    padding: 1rem 1.5rem;
+    border-radius: 1rem;
+    border: 1px solid $border-color;
+    margin-bottom: 1.5rem;
+    display: flex;
+    gap: 1rem;
+    box-shadow: $shadow-sm;
+
+    .search-box {
+      flex: 1;
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      background: #f8fafc;
+      padding: 0.5rem 1rem;
+      border-radius: 0.75rem;
+      border: 1px solid transparent;
+      transition: all 0.2s;
+      
+      &:focus-within { background: white; border-color: $primary-color; box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.05); }
+
+      .search-icon { color: #94a3b8; }
+      input { border: none; background: none; font-size: 0.95rem; width: 100%; &:focus { outline: none; } }
+    }
+  }
+
+  .content-card {
+    background: white;
+    border-radius: 1.25rem;
+    border: 1px solid $border-color;
+    box-shadow: $shadow-sm;
+    overflow: hidden;
+
+    .table-responsive { width: 100%; overflow-x: auto; }
+
+    .customer-table {
+      width: 100%;
+      border-collapse: collapse;
+      
+      th {
+        padding: 1rem 1.5rem;
+        background: #f8fafc;
+        text-align: left;
+        font-size: 0.75rem;
+        font-weight: 800;
+        color: #64748b;
+        text-transform: uppercase;
+        border-bottom: 1px solid $border-color;
+        &:last-child { text-align: right; padding-right: 2rem; }
+      }
+
+      td { 
+        padding: 1.25rem 1.5rem; 
+        border-bottom: 1px solid $border-color; 
+        vertical-align: middle; 
+        &:last-child { text-align: right; }
+      }
+
+      .name-cell {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+        .avatar { width: 36px; height: 36px; background: #eef2ff; color: $primary-color; border-radius: 0.75rem; display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 0.9rem; }
+        .name-info {
+          display: flex;
+          align-items: center;
+          gap: 0.5rem;
+          .name { font-weight: 700; color: #1e293b; }
+          .memo-indicator-icon { color: #818cf8; opacity: 0.8; }
+        }
+      }
+
+      .contact-cell {
+        display: flex;
+        flex-direction: column;
+        gap: 0.25rem;
+        .contact-item { display: flex; align-items: center; gap: 0.4rem; font-size: 0.85rem; color: #64748b; font-weight: 500; }
+        .memo-preview { font-size: 0.75rem; color: #94a3b8; margin-top: 0.25rem; font-style: italic; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 150px; }
+      }
+
+      .status-badge {
+        padding: 0.35rem 0.75rem;
+        border-radius: 2rem;
+        font-size: 0.75rem;
+        font-weight: 700;
+        &.active { background: #ecfdf5; color: #10b981; }
+        &.pending { background: #fffbeb; color: #f59e0b; }
+      }
+
+      .date-cell { font-size: 0.85rem; color: #94a3b8; }
+
+      .actions-cell {
+        position: relative;
+        .action-btn { padding: 0.5rem; border: none; background: none; color: #94a3b8; border-radius: 0.5rem; &:hover { background: #f1f5f9; color: $text-main; } }
+      }
+    }
+  }
+}
+
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(15, 23, 42, 0.4);
+  backdrop-filter: blur(4px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 10000;
+  padding: 1.5rem;
+
+  .modal-content {
+    background: white;
+    width: 100%;
+    max-width: 500px;
+    border-radius: 1.5rem;
+    padding: 2.5rem;
+    position: relative;
+    box-shadow: $shadow-xl;
+    animation: slideUp 0.3s ease-out;
+
+    .modal-close { position: absolute; top: 1.5rem; right: 1.5rem; background: none; border: none; color: #94a3b8; &:hover { color: $text-main; } }
+    h2 { margin-bottom: 2rem; font-weight: 800; color: #1e293b; }
+
+    .form-group {
+      margin-bottom: 1.25rem;
+      label { display: block; font-size: 0.85rem; font-weight: 700; color: #64748b; margin-bottom: 0.5rem; }
+      input, select, textarea {
+        width: 100%;
+        padding: 0.75rem 1rem;
+        border-radius: 0.75rem;
+        border: 1px solid #e2e8f0;
+        font-weight: 500;
+        &:focus { outline: none; border-color: $primary-color; box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.05); }
+      }
+      textarea { resize: vertical; min-height: 100px; }
+    }
+
+    .modal-actions {
+      display: flex;
+      gap: 0.75rem;
+      margin-top: 2rem;
+      button { flex: 1; padding: 0.85rem; border-radius: 0.75rem; font-weight: 700; transition: all 0.2s; }
+      .btn-cancel { background: #f1f5f9; border: none; color: #64748b; &:hover { background: #e2e8f0; } }
+      .btn-submit { background: $primary-color; border: none; color: white; &:hover { background: darken($primary-color, 5%); } }
+    }
+  }
+}
+
+.portal-menu {
+  background: white;
+  border: 1px solid #e2e8f0;
+  border-radius: 0.75rem;
+  box-shadow: $shadow-lg;
+  padding: 0.5rem;
+  min-width: 160px;
+  display: flex;
+  flex-direction: column;
+
+  button {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.6rem 1rem;
+    border: none;
+    background: none;
+    font-size: 0.9rem;
+    font-weight: 500;
+    color: #475569;
+    border-radius: 0.5rem;
+    width: 100%;
+    text-align: left;
+    &:hover { background: #f8fafc; color: $primary-color; }
+    &.delete { color: #ef4444; &:hover { background: #fef2f2; } }
+  }
+}

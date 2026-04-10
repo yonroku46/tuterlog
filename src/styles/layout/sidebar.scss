@@ -1,0 +1,119 @@
+@use "../base/variables" as *;
+
+.sidebar {
+  width: 260px;
+  height: 100%;
+  background-color: $sidebar-bg;
+  color: white;
+  display: flex;
+  flex-direction: column;
+  padding: 2rem 1rem;
+  box-shadow: 4px 0 10px rgba(0, 0, 0, 0.1);
+
+  & > a {
+    width: 100%;
+    text-decoration: none;
+    display: block;
+  }
+
+  .logo {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding-top: 1rem;
+    padding-bottom: 3rem;
+    transition: transform 0.3s ease;
+    
+    &:hover {
+      transform: scale(1.02);
+    }
+    
+    span {
+      font-size: 1.75rem;
+      font-weight: 800;
+      color: $primary-color;
+      letter-spacing: -1.5px;
+    }
+  }
+
+  .nav {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+
+    .nav-item {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      padding: 1rem 1.25rem;
+      border-radius: 0.75rem;
+      color: #94a3b8;
+      font-weight: 500;
+      transition: all 0.3s ease;
+      text-decoration: none;
+
+      &:hover {
+        background-color: rgba(255, 255, 255, 0.05);
+        color: white;
+      }
+
+      &.active {
+        background-color: $primary-color;
+        color: white;
+        box-shadow: 0 4px 12px rgba(99, 102, 241, 0.3);
+      }
+    }
+  }
+
+  .user-section {
+    margin-top: auto;
+    padding-top: 1.5rem;
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    
+    .user-info {
+      flex: 1;
+      overflow: hidden;
+      
+      .name {
+        font-size: 0.95rem;
+        font-weight: 700;
+        color: white;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+      
+      .email {
+        font-size: 0.75rem;
+        color: #94a3b8;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+    }
+
+    .logout-btn {
+      flex-shrink: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 40px;
+      height: 40px;
+      border-radius: 0.75rem;
+      color: #fca5a5;
+      background-color: rgba(239, 68, 68, 0.1);
+      transition: all 0.3s ease;
+
+      &:hover {
+        background-color: rgba(239, 68, 68, 0.2);
+        color: #ef4444;
+        transform: scale(1.05);
+      }
+    }
+  }
+}

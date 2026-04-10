@@ -1,0 +1,53 @@
+"use client";
+
+import React, { useState } from 'react';
+import { useAuth } from '@/hooks/useAuth';
+import Link from 'next/link';
+import Sidebar from './Sidebar';
+import "@/styles/pages/dashboard.scss";
+import "@/styles/layout/sidebar.scss";
+import { Menu, X } from 'lucide-react';
+
+const AppLayout = ({ children }: { children: React.ReactNode }) => {
+  const { user, loading } = useAuth();
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+
+  if (loading) {
+    return (
+      <div className="loading-container">
+        <p>로딩 중...</p>
+      </div>
+    );
+  }
+
+  if (!user) {
+    return <>{children}</>;
+  }
+
+  return (
+    <div className={`dashboard-layout ${isSidebarOpen ? 'sidebar-open' : ''}`}>
+      <div className="mobile-header">
+        <Link href="/">
+          <span className="logo-text">TuterLog</span>
+        </Link>
+        <button className="menu-toggle" onClick={() => setIsSidebarOpen(true)}>
+          <Menu size={24} />
+        </button>
+      </div>
+
+      {isSidebarOpen && (
+        <div className="sidebar-overlay" onClick={() => setIsSidebarOpen(false)}></div>
+      )}
+
+      <div className={`sidebar-wrapper ${isSidebarOpen ? 'active' : ''}`}>
+        <Sidebar onItemClick={() => setIsSidebarOpen(false)} />
+      </div>
+
+      <main className="dashboard-main-content">
+        {children}
+      </main>
+    </div>
+  );
+};
+
+export default AppLayout;
