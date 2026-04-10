@@ -1,0 +1,79 @@
+@use "../base/variables" as *;
+
+.not-found-container {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 2rem;
+  text-align: center;
+  background-color: #f8fafc;
+  animation: fadeIn 0.5s ease-out;
+
+  .error-illustration {
+    font-size: 6rem;
+    font-weight: 800;
+    color: #e2e8f0;
+    margin-bottom: 2rem;
+    position: relative;
+    
+    &::after {
+      content: "404";
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      color: rgba(99, 102, 241, 0.1);
+      font-size: 10rem;
+      z-index: -1;
+    }
+  }
+
+  .error-content {
+    max-width: 450px;
+    
+    h1 {
+      font-size: 2rem;
+      font-weight: 800;
+      color: #1e293b;
+      margin-bottom: 1rem;
+    }
+
+    p {
+      font-size: 1.1rem;
+      color: #64748b;
+      line-height: 1.6;
+      margin-bottom: 2.5rem;
+    }
+
+    .home-link {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.75rem;
+      padding: 1rem 2rem;
+      background-color: $primary-color;
+      color: white;
+      text-decoration: none;
+      border-radius: 1rem;
+      font-weight: 700;
+      font-size: 1.1rem;
+      transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+      box-shadow: 0 10px 15px -3px rgba(99, 102, 241, 0.2);
+
+      &:hover {
+        background-color: darken($primary-color, 8%);
+        transform: translateY(-3px);
+        box-shadow: 0 20px 25px -5px rgba(99, 102, 241, 0.3);
+      }
+
+      svg { transition: transform 0.2s; }
+      &:hover svg { transform: translateX(-4px); }
+    }
+  }
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}

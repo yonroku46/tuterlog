@@ -4,8 +4,9 @@ import Image from 'next/image';
 import { useAuth } from '@/hooks/useAuth';
 import StatsCard from '@/components/dashboard/StatsCard';
 import CustomerTable from '@/components/dashboard/CustomerTable';
-import { Users, Calendar, DollarSign, Plus, BarChart3 } from 'lucide-react';
+import { Users, Calendar, Coins, Plus, BarChart3 } from 'lucide-react';
 import { googleCalendarService } from '@/services/googleCalendarService';
+import { customerService } from '@/services/customerService';
 import "@/styles/pages/dashboard.scss";
 import "@/styles/pages/login.scss";
 import React, { useState, useEffect } from 'react';
@@ -13,6 +14,7 @@ import React, { useState, useEffect } from 'react';
 export default function Home() {
   const { user, googleAccessToken, loginWithGoogle, filterKeyword } = useAuth();
   const [counts, setCounts] = useState({ weekly: 0, monthly: 0 });
+  const [customerCount, setCustomerCount] = useState(0);
 
   useEffect(() => {
     const fetchStats = async () => {
@@ -32,18 +34,20 @@ export default function Home() {
       const endOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59);
 
       try {
-        const [weeklyCount, monthlyCount] = await Promise.all([
+        const [weeklyCount, monthlyCount, customerList] = await Promise.all([
           googleCalendarService.getEventCount(googleAccessToken, startOfWeek.toISOString(), endOfWeek.toISOString(), filterKeyword),
-          googleCalendarService.getEventCount(googleAccessToken, startOfMonth.toISOString(), endOfMonth.toISOString(), filterKeyword)
+          googleCalendarService.getEventCount(googleAccessToken, startOfMonth.toISOString(), endOfMonth.toISOString(), filterKeyword),
+          customerService.getCustomers(user.uid)
         ]);
         setCounts({ weekly: weeklyCount, monthly: monthlyCount });
+        setCustomerCount(customerList.length);
       } catch (error) {
         console.error("Failed to fetch dashboard stats:", error);
       }
     };
 
     fetchStats();
-  }, [googleAccessToken, filterKeyword]);
+  }, [googleAccessToken, filterKeyword, user]);
 
   if (!user) {
     return (
@@ -88,9 +92,9 @@ export default function Home() {
         <section className="stats-grid">
           <StatsCard 
             title="전체 고객" 
-            value="1,284" 
+            value={`${customerCount}명`} 
             icon={<Users size={24} />} 
-            trend="지난달 대비 12.5%" 
+            trend="현재 관리 중" 
             trendUp={true} 
           />
           <StatsCard 
@@ -109,9 +113,9 @@ export default function Home() {
           />
           <StatsCard 
             title="매출 현황" 
-            value="₩45,280,000" 
-            icon={<DollarSign size={24} />} 
-            trend="지난달 대비 8.1%" 
+            value="-" 
+            icon={<Coins size={24} />} 
+            trend="준비중" 
             trendUp={true} 
           />
         </section>

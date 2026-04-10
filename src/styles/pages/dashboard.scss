@@ -1,3 +1,4 @@
+@use "sass:color";
 @use "../base/variables" as *;
 
 .dashboard-layout {
@@ -165,7 +166,7 @@
           background: $primary-color;
           color: white;
           border: none;
-          &:hover { background: darken($primary-color, 10%); transform: translateY(-1px); box-shadow: $shadow-md; }
+          &:hover { background: color.adjust($primary-color, $lightness: -10%); transform: translateY(-1px); box-shadow: $shadow-md; }
         }
       }
 

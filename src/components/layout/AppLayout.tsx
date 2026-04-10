@@ -6,7 +6,7 @@ import Link from 'next/link';
 import Sidebar from './Sidebar';
 import "@/styles/pages/dashboard.scss";
 import "@/styles/layout/sidebar.scss";
-import { Menu, X } from 'lucide-react';
+import { Menu, X, Loader2 } from 'lucide-react';
 
 const AppLayout = ({ children }: { children: React.ReactNode }) => {
   const { user, loading } = useAuth();
@@ -15,7 +15,9 @@ const AppLayout = ({ children }: { children: React.ReactNode }) => {
   if (loading) {
     return (
       <div className="loading-container">
-        <p>로딩 중...</p>
+        <div className="loading-brand">TuterLog</div>
+        <Loader2 className="loader-spinner" size={40} />
+        <p className="loading-text">기분 좋은 하루를 준비 중입니다...</p>
       </div>
     );
   }

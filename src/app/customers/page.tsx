@@ -240,56 +240,67 @@ const CustomersPage = () => {
       </section>
 
       {isModalOpen && (
-        <div className="modal-overlay">
-          <div className="modal-content">
-            <button className="modal-close" onClick={() => setIsModalOpen(false)}>
-              <X size={24} />
-            </button>
-            <h2>{currentCustomer?.id ? '고객 정보 수정' : '새 고객 등록'}</h2>
+        <div className="modal-overlay" onClick={() => setIsModalOpen(false)}>
+          <div className="modal-content" onClick={e => e.stopPropagation()}>
+            <button className="modal-close" onClick={() => setIsModalOpen(false)}><X size={20} /></button>
+            
+            <div className="modal-header">
+              <h2>{currentCustomer?.id ? '고객 정보 수정' : '신규 고객 등록'}</h2>
+              <div 
+                className={`status-toggle ${currentCustomer?.status === 'pending' ? 'pending' : 'active'}`}
+                onClick={() => setCurrentCustomer({
+                  ...currentCustomer!, 
+                  status: currentCustomer?.status === 'pending' ? 'active' : 'pending'
+                })}
+              >
+                <div className="toggle-track">
+                  <div className="toggle-thumb" />
+                </div>
+                <span>{currentCustomer?.status === 'pending' ? '비활성' : '활성'}</span>
+              </div>
+            </div>
+            
             <form onSubmit={handleSubmit}>
-              <div className="form-group">
-                <label>이름</label>
-                <input 
-                  type="text" 
-                  value={currentCustomer?.name || ''} 
-                  onChange={(e) => setCurrentCustomer({...currentCustomer!, name: e.target.value})}
-                  required 
-                />
+              <div className="form-row">
+                <div className="form-group">
+                  <label>이름</label>
+                  <input 
+                    type="text" 
+                    value={currentCustomer?.name || ''} 
+                    onChange={(e) => setCurrentCustomer({...currentCustomer!, name: e.target.value})} 
+                    placeholder="홍길동"
+                    required 
+                  />
+                </div>
+                <div className="form-group">
+                  <label>닉네임</label>
+                  <input 
+                    type="text" 
+                    value={currentCustomer?.nickname || ''} 
+                    onChange={(e) => setCurrentCustomer({...currentCustomer!, nickname: e.target.value})} 
+                    placeholder="길동이"
+                    required 
+                  />
+                </div>
               </div>
-              <div className="form-group">
-                <label>닉네임</label>
-                <input 
-                  type="text" 
-                  value={currentCustomer?.nickname || ''} 
-                  onChange={(e) => setCurrentCustomer({...currentCustomer!, nickname: e.target.value})}
-                  required 
-                />
-              </div>
+
               <div className="form-group">
                 <label>연락처</label>
                 <input 
-                  type="text" 
+                  type="tel" 
                   value={currentCustomer?.phone || ''} 
-                  onChange={(e) => setCurrentCustomer({...currentCustomer!, phone: e.target.value})}
+                  onChange={(e) => setCurrentCustomer({...currentCustomer!, phone: e.target.value})} 
+                  placeholder="010-0000-0000"
                   required 
                 />
               </div>
-              <div className="form-group">
-                <label>상태</label>
-                <select 
-                  value={currentCustomer?.status || 'active'} 
-                  onChange={(e) => setCurrentCustomer({...currentCustomer!, status: e.target.value as 'active' | 'pending'})}
-                >
-                  <option value="active">활성</option>
-                  <option value="pending">대기</option>
-                </select>
-              </div>
+
               <div className="form-group">
                 <label>메모</label>
                 <textarea 
                   value={currentCustomer?.memo || ''} 
-                  onChange={(e) => setCurrentCustomer({...currentCustomer!, memo: e.target.value})}
-                  placeholder="고객 특이사항 및 메모..."
+                  onChange={(e) => setCurrentCustomer({...currentCustomer!, memo: e.target.value})} 
+                  placeholder="특이사항을 입력하세요 (예: 수업료 매달 5일 선입금)"
                   rows={4}
                 />
               </div>
