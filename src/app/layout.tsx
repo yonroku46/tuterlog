@@ -5,19 +5,12 @@ import "@/styles/layout/sidebar.scss";
 import { AuthProvider } from "@/context/AuthContext";
 import AppLayout from "@/components/layout/AppLayout";
 
+import { generatePageMetadata } from "@/common/utils/metaUtils";
+
 const inter = Inter({ subsets: ["latin"], variable: "--font-inter" });
 const roboto = Roboto({ subsets: ["latin"], weight: ["400", "500", "700"], variable: "--font-roboto" });
 
-export const metadata: Metadata = {
-  title: {
-    default: "대시보드 | TuterLog",
-    template: "%s | TuterLog",
-  },
-  description: "고객 관리 시스템",
-  icons: {
-    icon: "/assets/icons/favicon.ico",
-  },
-};
+export const metadata = generatePageMetadata('home');
 
 export default function RootLayout({
   children,

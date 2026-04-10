@@ -1,8 +1,7 @@
 import { Metadata } from 'next';
+import { generatePageMetadata } from '@/common/utils/metaUtils';
 
-export const metadata: Metadata = {
-  title: '고객 관리',
-};
+export const metadata: Metadata = generatePageMetadata('customers');
 
 export default function CustomersLayout({ children }: { children: React.ReactNode }) {
   return <>{children}</>;

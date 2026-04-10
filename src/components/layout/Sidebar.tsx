@@ -5,6 +5,8 @@ import { useAuth } from '@/hooks/useAuth';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 
+import Image from 'next/image';
+
 interface SidebarProps {
   onItemClick?: () => void;
 }
@@ -24,6 +26,13 @@ const Sidebar = ({ onItemClick }: SidebarProps) => {
     <aside className="sidebar">
       <Link href="/">
         <div className="logo">
+          <Image 
+            src="/assets/icons/favicon.svg" 
+            alt="TuterLog Logo" 
+            width={32} 
+            height={32}
+            className="logo-icon"
+          />
           <span>TuterLog</span>
         </div>
       </Link>

@@ -49,6 +49,14 @@ export default function Home() {
     fetchStats();
   }, [googleAccessToken, filterKeyword, user]);
 
+  useEffect(() => {
+    if (!user) {
+      document.title = `로그인 | TuterLog`;
+    } else {
+      document.title = `대시보드 | TuterLog`;
+    }
+  }, [user]);
+
   if (!user) {
     return (
       <main className="login-container">
