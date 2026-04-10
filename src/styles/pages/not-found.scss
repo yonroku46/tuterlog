@@ -1,3 +1,4 @@
+@use "sass:color";
 @use "../base/variables" as *;
 
 .not-found-container {
@@ -62,7 +63,7 @@
       box-shadow: 0 10px 15px -3px rgba(99, 102, 241, 0.2);
 
       &:hover {
-        background-color: darken($primary-color, 8%);
+        background-color: color.adjust($primary-color, $lightness: -8%);
         transform: translateY(-3px);
         box-shadow: 0 20px 25px -5px rgba(99, 102, 241, 0.3);
       }

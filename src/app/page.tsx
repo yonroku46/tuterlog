@@ -18,7 +18,7 @@ export default function Home() {
 
   useEffect(() => {
     const fetchStats = async () => {
-      if (!googleAccessToken) return;
+      if (!googleAccessToken || !user?.uid) return;
 
       const now = new Date();
       
