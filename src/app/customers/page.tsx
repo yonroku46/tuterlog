@@ -170,7 +170,11 @@ const CustomersPage = () => {
                           <div className="avatar">{customer.name[0]}</div>
                           <div className="name-info">
                             <div className="name">{customer.name}</div>
-                            {customer.memo && <FileText size={14} className="memo-indicator-icon" title={customer.memo} />}
+                            {customer.memo && (
+                              <span title={customer.memo}>
+                                <FileText size={14} className="memo-indicator-icon" />
+                              </span>
+                            )}
                           </div>
                         </div>
                       </td>
