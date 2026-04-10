@@ -1,4 +1,5 @@
 @use "./base/variables" as *;
+@use "./base/mixins" as *;
 
 :root {
   --background: #ffffff;
@@ -70,8 +71,11 @@ button {
   border-radius: 10px;
   transition: background 0.2s;
 }
-::-webkit-scrollbar-thumb:hover {
-  background: rgba(0, 0, 0, 0.2);
+
+@include hover {
+  ::-webkit-scrollbar-thumb:hover {
+    background: rgba(0, 0, 0, 0.2);
+  }
 }
 
 

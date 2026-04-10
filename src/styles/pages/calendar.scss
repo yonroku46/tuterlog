@@ -1,4 +1,5 @@
 @use "../base/variables" as *;
+@use "../base/mixins" as *;
 
 $mobile: 480px;
 $tablet: 768px;
@@ -46,8 +47,6 @@ $tablet: 768px;
           padding: 0.25rem 0.5rem;
           border-radius: 0.5rem;
           transition: background 0.2s;
-          
-          &:hover { background: rgba(0,0,0,0.05); }
 
           .picker-icon { color: $primary-color; }
 
@@ -88,7 +87,6 @@ $tablet: 768px;
                   cursor: pointer;
                   text-align: center;
                   
-                  &:hover { background: #f1f5f9; color: $primary-color; }
                   &.active { background: $primary-color; color: white; }
                 }
               }
@@ -110,7 +108,6 @@ $tablet: 768px;
         font-size: 0.9rem;
         transition: all 0.2s;
         
-        &:hover { background: white; border-color: $primary-color; color: $primary-color; transform: translateY(-1px); }
         @media (max-width: $mobile) { padding: 0.5rem 0.75rem; font-size: 0.8rem; }
       }
     }
@@ -137,7 +134,6 @@ $tablet: 768px;
           display: flex;
           align-items: center;
           justify-content: center;
-          &:hover { background: #f1f5f9; color: $primary-color; border-color: #cbd5e1; }
           @media (max-width: $mobile) { flex: 1; }
         }
 
@@ -152,12 +148,6 @@ $tablet: 768px;
           font-size: 0.9rem;
           cursor: pointer;
           transition: all 0.2s;
-          &:hover { 
-            border-color: $primary-color; 
-            color: $primary-color;
-            background: #f5f6ff;
-            transform: translateY(-1px);
-          }
           @media (max-width: $mobile) { flex: 2; }
         }
       }
@@ -178,7 +168,6 @@ $tablet: 768px;
     font-weight: 600;
     cursor: pointer;
     transition: transform 0.2s;
-    &:hover { transform: translateY(-1px); }
   }
 
   .calendar-layout-grid {
@@ -240,7 +229,6 @@ $tablet: 768px;
         transition: all 0.2s;
         overflow: hidden;
 
-        &:hover { border-color: $primary-color; background: #fcfcff; }
         &.other-month { opacity: 0.15; cursor: default; }
 
         &.selected {
@@ -341,7 +329,6 @@ $tablet: 768px;
         border: 1px solid transparent;
         transition: all 0.2s;
 
-        &:hover { border-color: $primary-color; background: white; transform: translateX(4px); }
         &.focused { border-color: $primary-color; background: white; box-shadow: 0 4px 12px rgba(99, 102, 241, 0.08); }
 
         .time-box {
@@ -375,19 +362,51 @@ $tablet: 768px;
             margin-top: 0.5rem;
             margin-left: auto;
             
-            &:hover { 
-              background: #10b981; 
-              color: white; 
-              border-color: #10b981;
-              transform: translateY(-1px);
-              box-shadow: 0 4px 6px -1px rgba(16, 185, 129, 0.2);
-            }
-            
             svg { transition: transform 0.2s; }
-            &:hover svg { transform: scale(1.1); }
           }
         }
       }
+    }
+  }
+}
+
+@include hover {
+  .calendar-page-container {
+    .page-header .header-top-row {
+      .date-selector:hover { background: rgba(0,0,0,0.05); }
+      .google-link-btn:hover { background: white; border-color: $primary-color; color: $primary-color; transform: translateY(-1px); }
+    }
+    .page-header .header-actions .nav-group {
+      .nav-btn:hover { background: #f1f5f9; color: $primary-color; border-color: #cbd5e1; }
+      .today-btn:hover {
+        border-color: $primary-color;
+        color: $primary-color;
+        background: #f5f6ff;
+        transform: translateY(-1px);
+      }
+    }
+    .sync-banner:hover { transform: translateY(-1px); }
+    .calendar-main .calendar-grid .day-cell:hover { border-color: $primary-color; background: #fcfcff; }
+    .agenda-sidebar .agenda-list .agenda-item {
+      &:hover { border-color: $primary-color; background: white; transform: translateX(4px); }
+      .info-box .done-btn:hover {
+        background: #10b981;
+        color: white;
+        border-color: #10b981;
+        transform: translateY(-1px);
+        box-shadow: 0 4px 6px -1px rgba(16, 185, 129, 0.2);
+        svg { transform: scale(1.1); }
+      }
+    }
+  }
+  .error-state-card .error-actions {
+    .retry-btn:hover { background: #f8fafc; }
+    .login-btn:hover { background: #4f46e5; }
+  }
+  .page-header .header-top-row .title-section .date-selector .picker-dropdown .picker-grid {
+    .year-col button:hover, .month-col button:hover {
+      background: #f1f5f9;
+      color: $primary-color;
     }
   }
 }
@@ -422,7 +441,7 @@ $tablet: 768px;
   .error-actions {
     display: flex;
     gap: 1rem;
-    .retry-btn { padding: 0.75rem 1.5rem; border-radius: 0.75rem; border: 1px solid #e2e8f0; background: white; font-weight: 700; color: #475569; &:hover { background: #f8fafc; } }
-    .login-btn { padding: 0.75rem 2rem; border-radius: 0.75rem; background: #6366f1; color: white; border: none; font-weight: 700; &:hover { background: #4f46e5; } }
+    .retry-btn { padding: 0.75rem 1.5rem; border-radius: 0.75rem; border: 1px solid #e2e8f0; background: white; font-weight: 700; color: #475569; }
+    .login-btn { padding: 0.75rem 2rem; border-radius: 0.75rem; background: #6366f1; color: white; border: none; font-weight: 700; }
   }
 }

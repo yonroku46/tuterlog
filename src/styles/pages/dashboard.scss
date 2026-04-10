@@ -1,5 +1,6 @@
 @use "sass:color";
 @use "../base/variables" as *;
+@use "../base/mixins" as *;
 
 .dashboard-layout {
   display: flex;
@@ -111,7 +112,7 @@
 .home-dashboard {
   width: 100%;
   max-width: 100%;
-
+  padding-bottom: 1.5rem;
   .header {
     margin-bottom: 2rem;
     display: flex;
@@ -160,14 +161,12 @@
           border: 1px solid $border-color;
           background: white;
           color: $text-muted;
-          &:hover { border-color: $primary-color; color: $primary-color; background: #f5f6ff; }
         }
         
         &.btn-primary {
           background: $primary-color;
           color: white;
           border: none;
-          &:hover { background: color.adjust($primary-color, $lightness: -10%); transform: translateY(-1px); box-shadow: $shadow-md; }
         }
       }
 
@@ -197,7 +196,6 @@
   }
 
   .section-container {
-    margin-bottom: 2rem;
     max-width: 100%;
   }
 }
@@ -219,10 +217,6 @@
     border-radius: 0.85rem;
   }
 
-  &:hover {
-    box-shadow: $shadow-md;
-    transform: translateY(-2px);
-  }
 
   .icon-box {
     width: 42px;
@@ -368,5 +362,26 @@
       font-size: 0.8rem;
       color: $text-muted;
     }
+  }
+}
+
+@include hover {
+  .home-dashboard {
+    .header .actions button {
+      &.btn-outline:hover {
+        border-color: $primary-color;
+        color: $primary-color;
+        background: #f5f6ff;
+      }
+      &.btn-primary:hover {
+        background: color.adjust($primary-color, $lightness: -10%);
+        transform: translateY(-1px);
+        box-shadow: $shadow-md;
+      }
+    }
+  }
+  .stats-card:hover {
+    box-shadow: $shadow-md;
+    transform: translateY(-2px);
   }
 }

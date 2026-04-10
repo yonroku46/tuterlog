@@ -1,4 +1,5 @@
 @use "../base/variables" as *;
+@use "../base/mixins" as *;
 @use "sass:color";
 
 $mobile: 480px;
@@ -10,7 +11,7 @@ $tablet: 768px;
   margin: 0 auto;
   animation: fadeIn 0.4s ease-out;
 
-  @media (max-width: $tablet) { padding: 0; }
+  @media (max-width: $tablet) { padding: 0; padding-bottom: 1.5rem; }
 
   .header {
     display: flex;
@@ -34,7 +35,6 @@ $tablet: 768px;
       font-weight: 700;
       transition: all 0.2s;
       cursor: pointer;
-      &:hover { background: color.adjust($primary-color, $lightness: -5%); transform: translateY(-1px); box-shadow: 0 4px 12px rgba(99, 102, 241, 0.2); }
       @media (max-width: $mobile) { width: 100%; justify-content: center; }
     }
   }
@@ -132,7 +132,7 @@ $tablet: 768px;
 
       .actions-cell {
         position: relative;
-        .action-btn { padding: 0.4rem; border: none; background: none; color: #94a3b8; border-radius: 0.5rem; cursor: pointer; &:hover { background: #f1f5f9; color: #0f172a; } }
+        .action-btn { padding: 0.4rem; border: none; background: none; color: #94a3b8; border-radius: 0.5rem; cursor: pointer; }
       }
     }
   }
@@ -270,8 +270,8 @@ $tablet: 768px;
       border-top: 1px solid #f1f5f9;
       
       button { flex: 1; padding: 0.8rem; border-radius: 0.85rem; font-weight: 700; font-size: 0.95rem; cursor: pointer; transition: all 0.2s; }
-      .btn-cancel { background: #f8fafc; border: 1px solid #e2e8f0; color: #64748b; &:hover { background: #f1f5f9; color: #0f172a; } }
-      .btn-submit { background: $primary-color; border: none; color: white; &:hover { background: color.adjust($primary-color, $lightness: -5%); transform: translateY(-1px); } }
+      .btn-cancel { background: #f8fafc; border: 1px solid #e2e8f0; color: #64748b; }
+      .btn-submit { background: $primary-color; border: none; color: white; }
     }
   }
 }
@@ -311,9 +311,42 @@ $tablet: 768px;
     
     &.delete {
       color: #ef4444;
-      &:hover { background: #fef2f2; color: #dc2626; }
     }
 
     svg { color: currentColor; opacity: 0.7; }
+  }
+}
+
+@include hover {
+  .customers-content {
+    .header .btn-primary:hover {
+      background: color.adjust($primary-color, $lightness: -5%);
+      transform: translateY(-1px);
+      box-shadow: 0 4px 12px rgba(99, 102, 241, 0.2);
+    }
+    .content-card .customer-table .actions-cell .action-btn:hover {
+      background: #f1f5f9;
+      color: #0f172a;
+    }
+    .modal-overlay .modal-content .modal-actions {
+      .btn-cancel:hover {
+        background: #f1f5f9;
+        color: #0f172a;
+      }
+      .btn-submit:hover {
+        background: color.adjust($primary-color, $lightness: -5%);
+        transform: translateY(-1px);
+      }
+    }
+  }
+  .portal-menu button {
+    &:hover {
+      background: #f8fafc;
+      color: $primary-color;
+    }
+    &.delete:hover {
+      background: #fef2f2;
+      color: #dc2626;
+    }
   }
 }

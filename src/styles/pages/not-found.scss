@@ -1,5 +1,6 @@
 @use "sass:color";
 @use "../base/variables" as *;
+@use "../base/mixins" as *;
 
 .not-found-container {
   min-height: 100vh;
@@ -62,14 +63,8 @@
       transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
       box-shadow: 0 10px 15px -3px rgba(99, 102, 241, 0.2);
 
-      &:hover {
-        background-color: color.adjust($primary-color, $lightness: -8%);
-        transform: translateY(-3px);
-        box-shadow: 0 20px 25px -5px rgba(99, 102, 241, 0.3);
-      }
 
       svg { transition: transform 0.2s; }
-      &:hover svg { transform: translateX(-4px); }
     }
   }
 }
@@ -77,4 +72,13 @@
 @keyframes fadeIn {
   from { opacity: 0; transform: translateY(10px); }
   to { opacity: 1; transform: translateY(0); }
+}
+
+@include hover {
+  .not-found-container .error-content .home-link:hover {
+    background-color: color.adjust($primary-color, $lightness: -8%);
+    transform: translateY(-3px);
+    box-shadow: 0 20px 25px -5px rgba(99, 102, 241, 0.3);
+    svg { transform: translateX(-4px); }
+  }
 }

@@ -1,5 +1,6 @@
 @use "sass:color";
 @use "../base/variables" as *;
+@use "../base/mixins" as *;
 
 $mobile: 480px;
 $tablet: 768px;
@@ -73,11 +74,6 @@ $tablet: 768px;
     @media (max-width: $tablet) {
       padding: 0.65rem 1rem;
       font-size: 0.9rem;
-    }
-
-    &:hover {
-      background-color: $bg-color;
-      color: $primary-color;
     }
 
     &.active {
@@ -221,12 +217,6 @@ $tablet: 768px;
       border: none;
       cursor: pointer;
       transition: all 0.2s;
-      
-      &:hover:not(:disabled) {
-        background-color: color.adjust($primary-color, $lightness: -5%);
-        transform: translateY(-1px);
-        box-shadow: $shadow-md;
-      }
 
       &:disabled {
         opacity: 0.6;
@@ -246,5 +236,17 @@ $tablet: 768px;
     background: #f8fafc;
     border-radius: 1rem;
     border: 2px dashed #e2e8f0;
+  }
+}
+
+@include hover {
+  .settings-nav .nav-link:hover {
+    background-color: $bg-color;
+    color: $primary-color;
+  }
+  .settings-content .save-action .btn-primary:hover:not(:disabled) {
+    background-color: color.adjust($primary-color, $lightness: -5%);
+    transform: translateY(-1px);
+    box-shadow: $shadow-md;
   }
 }
