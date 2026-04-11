@@ -1,10 +1,11 @@
 "use client";
 
 import React, { useState, useEffect } from 'react';
-import { Clock, Calendar as CalendarIcon, ChevronUp, ChevronDown, ArrowUpDown } from 'lucide-react';
+import { Calendar as CalendarIcon } from 'lucide-react';
 import Link from 'next/link';
 import { useAuth } from '@/hooks/useAuth';
 import { customerService, ClassSession } from '@/services/customerService';
+import DataTable, { Column } from '@/components/ui/DataTable';
 
 const RecentHistoryTable = () => {
   const { user } = useAuth();
@@ -31,7 +32,7 @@ const RecentHistoryTable = () => {
   const formatShortDate = (dateStr: string) => {
     if (!dateStr) return '';
     const date = new Date(dateStr);
-    return `${date.getMonth() + 1}/${date.getDate()}`;
+    return `${date.getMonth() + 1}월 ${date.getDate()}일`;
   };
 
   const formatSessionTime = (dateStr: string) => {
@@ -46,11 +47,6 @@ const RecentHistoryTable = () => {
       direction = 'desc';
     }
     setSortConfig({ key, direction });
-  };
-
-  const getSortIcon = (key: string) => {
-    if (!sortConfig || sortConfig.key !== key) return <ArrowUpDown size={12} className="sort-icon inactive" />;
-    return sortConfig.direction === 'asc' ? <ChevronUp size={12} className="sort-icon active" /> : <ChevronDown size={12} className="sort-icon active" />;
   };
 
   const sortedSessions = React.useMemo(() => {
@@ -76,6 +72,47 @@ const RecentHistoryTable = () => {
     return sortableSessions;
   }, [sessions, sortConfig]);
 
+  const columns: Column<ClassSession>[] = [
+    {
+      header: '날짜',
+      key: 'startTime',
+      sortable: true,
+      render: (session) => (
+        <span className="date-text">{formatShortDate(session.startTime)}</span>
+      )
+    },
+    {
+      header: '수업 내용',
+      key: 'eventTitle',
+      sortable: true,
+      render: (session) => (
+        <div className="summary-cell">
+          <div className="session-title">{session.eventTitle}</div>
+        </div>
+      )
+    },
+    {
+      header: '진행 시간',
+      key: 'duration',
+      render: (session) => (
+        <div className="time-info">
+          <span>{formatSessionTime(session.startTime)} ~ {formatSessionTime(session.endTime)}</span>
+        </div>
+      )
+    },
+    {
+      header: '완료 시각',
+      key: 'completedAtDate',
+      sortable: true,
+      className: 'date-cell',
+      render: (session) => (
+        session.completedAt?.toDate 
+          ? session.completedAt.toDate().toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit' })
+          : '-'
+      )
+    }
+  ];
+
   return (
     <div className="content-card">
       <div className="card-header">
@@ -85,65 +122,28 @@ const RecentHistoryTable = () => {
         </div>
         <Link href="/customers" className="view-all">학생별 이력 보기</Link>
       </div>
-      <div className="table-responsive">
-        <table className="customer-table">
-          <thead>
-            <tr>
-              <th onClick={() => requestSort('startTime')} className="sortable">
-                <div className="th-content">날짜 {getSortIcon('startTime')}</div>
-              </th>
-              <th onClick={() => requestSort('eventTitle')} className="sortable">
-                <div className="th-content">수업 내용 {getSortIcon('eventTitle')}</div>
-              </th>
-              <th>진행 시간</th>
-              <th onClick={() => requestSort('completedAtDate')} className="sortable">
-                <div className="th-content">완료 시각 {getSortIcon('completedAtDate')}</div>
-              </th>
-            </tr>
-          </thead>
-          <tbody>
-            {loading ? (
-              <tr><td colSpan={4} style={{ textAlign: 'center', padding: '3rem' }}>이력을 불러오는 중...</td></tr>
-            ) : sortedSessions.length > 0 ? (
-              sortedSessions.map((session, index) => (
-                <tr key={session.id || index}>
-                  <td>
-                    <div className="date-badge">
-                      {formatShortDate(session.startTime)}
-                    </div>
-                  </td>
-                  <td>
-                    <div className="summary-cell">
-                      <div className="session-title">{session.eventTitle}</div>
-                    </div>
-                  </td>
-                  <td>
-                    <div className="time-info">
-                      <Clock size={12} />
-                      <span>{formatSessionTime(session.startTime)} ~ {formatSessionTime(session.endTime)}</span>
-                    </div>
-                  </td>
-                  <td className="date-cell">
-                    {session.completedAt?.toDate 
-                      ? session.completedAt.toDate().toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit' })
-                      : '-'
-                    }
-                  </td>
-                </tr>
-              ))
-            ) : (
-              <tr>
-                <td colSpan={4} style={{ textAlign: 'center', padding: '4rem', color: '#94a3b8' }}>
-                  <div className="empty-state">
-                    <p>아직 기록된 수업 이력이 없습니다.</p>
-                    <Link href="/calendar" className="empty-action">캘린더에서 수업 종료하기</Link>
-                  </div>
-                </td>
-              </tr>
-            )}
-          </tbody>
-        </table>
-      </div>
+      <DataTable
+        data={sortedSessions}
+        columns={columns}
+        loading={loading}
+        sortConfig={sortConfig}
+        onSort={requestSort}
+        emptyMessage="아직 기록된 수업 이력이 없습니다."
+        rowKey={(session, index) => session.id || index}
+      />
+      {!loading && sortedSessions.length === 0 && (
+        <div className="empty-state-action" style={{ textAlign: 'center', paddingBottom: '2rem' }}>
+          <Link href="/calendar" className="empty-action" style={{ 
+            display: 'inline-block',
+            padding: '0.6rem 1.25rem',
+            background: '#f5f6ff',
+            color: '#6366f1',
+            borderRadius: '0.75rem',
+            fontWeight: 700,
+            fontSize: '0.85rem'
+           }}>캘린더에서 수업 종료하기</Link>
+        </div>
+      )}
     </div>
   );
 };

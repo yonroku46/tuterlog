@@ -211,11 +211,12 @@ const CalendarPage = () => {
 
   useEffect(() => {
     if (!authLoading && !user) {
-      router.push("/");
+      router.replace("/");
     }
   }, [user, authLoading, router]);
 
-  if (authLoading || !user) return null;
+  if (authLoading) return null;
+  if (!user) return <div className="loading-state">인증 확인 중...</div>;
 
   const totalDays = daysInMonth(year, month);
   const startDay = firstDayOfMonth(year, month);

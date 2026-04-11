@@ -465,7 +465,7 @@ $tablet: 768px;
     .sync-banner:hover { transform: translateY(-1px); }
     .calendar-main .calendar-grid .day-cell:hover { border-color: $primary-color; background: #fcfcff; }
     .agenda-sidebar .agenda-list .agenda-item {
-      &:hover { border-color: $primary-color; background: white; transform: translateX(4px); }
+      &:hover { border-color: $primary-color; background: white; }
     }
   }
   .error-state-card .error-actions {

@@ -89,12 +89,6 @@ export default function Home() {
             <h1>대시보드</h1>
             <p>환영합니다, {user.displayName}님!</p>
           </div>
-          <div className="actions">
-            <button className="btn-primary">
-              <Plus size={20} />
-              고객 추가
-            </button>
-          </div>
         </header>
 
         <section className="stats-grid">

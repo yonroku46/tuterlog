@@ -8,6 +8,7 @@ import { useRouter } from 'next/navigation';
 import "@/styles/pages/customers.scss";
 import "@/styles/pages/dashboard.scss";
 import { customerService, Customer, ClassSession } from '@/services/customerService';
+import DataTable from '@/components/ui/DataTable';
 
 const CustomersPage = () => {
   const { user, loading: authLoading } = useAuth();
@@ -126,7 +127,7 @@ const CustomersPage = () => {
   const formatShortDate = (dateStr: string) => {
     if (!dateStr) return '';
     const date = new Date(dateStr);
-    return `${date.getMonth() + 1}/${date.getDate()}`;
+    return `${date.getMonth() + 1}월 ${date.getDate()}일`;
   };
 
   const formatSessionTime = (dateStr: string) => {
@@ -143,10 +144,6 @@ const CustomersPage = () => {
     setSortConfig({ key, direction });
   };
 
-  const getSortIcon = (key: string) => {
-    if (!sortConfig || sortConfig.key !== key) return <ArrowUpDown size={12} className="sort-icon inactive" />;
-    return sortConfig.direction === 'asc' ? <ChevronUp size={12} className="sort-icon active" /> : <ChevronDown size={12} className="sort-icon active" />;
-  };
 
   const sortedCustomers = React.useMemo(() => {
     const filtered = customers.filter(c => 
@@ -229,115 +226,111 @@ const CustomersPage = () => {
 
       <section className="section-container">
         <div className="content-card">
-          <div className="table-responsive">
-            <table className="customer-table">
-              <thead>
-                <tr>
-                  <th onClick={() => requestSort('name')} className="sortable">
-                    <div className="th-content">이름 {getSortIcon('name')}</div>
-                  </th>
-                  <th onClick={() => requestSort('nickname')} className="sortable">
-                    <div className="th-content">상세 정보 {getSortIcon('nickname')}</div>
-                  </th>
-                  <th onClick={() => requestSort('totalSessions')} className="sortable">
-                    <div className="th-content">총 수업 {getSortIcon('totalSessions')}</div>
-                  </th>
-                  <th onClick={() => requestSort('status')} className="sortable">
-                    <div className="th-content">상태 {getSortIcon('status')}</div>
-                  </th>
-                  <th onClick={() => requestSort('date')} className="sortable">
-                    <div className="th-content">등록일 {getSortIcon('date')}</div>
-                  </th>
-                  <th>작업</th>
-                </tr>
-              </thead>
-              <tbody>
-                {isLoading ? (
-                  <tr>
-                    <td colSpan={6} style={{ textAlign: 'center', padding: '3rem' }}>로딩 중...</td>
-                  </tr>
-                ) : sortedCustomers.length === 0 ? (
-                  <tr>
-                    <td colSpan={6} style={{ textAlign: 'center', padding: '3rem' }}>고객 데이터가 없습니다.</td>
-                  </tr>
-                ) : (
-                  sortedCustomers.map((customer, index) => (
-                    <tr key={customer.id || index}>
-                      <td>
-                        <div className="name-cell">
-                          <div className="avatar">{customer.name[0]}</div>
-                          <div className="name-info">
-                            <div className="name">{customer.name}</div>
-                            {customer.memo && (
-                              <span title={customer.memo}>
-                                <FileText size={14} className="memo-indicator-icon" />
-                              </span>
-                            )}
-                          </div>
-                        </div>
-                      </td>
-                      <td>
-                        <div className="contact-cell">
-                          <div className="contact-item">
-                            <span style={{ color: '#6366f1', fontWeight: 600 }}>@{customer.nickname}</span>
-                          </div>
-                          <div className="contact-item">
-                            <Phone size={12} /> {customer.phone}
-                          </div>
-                        </div>
-                      </td>
-                      <td>
-                        <div className="session-count">
-                          <Clock size={14} />
-                          <span>{customer.totalSessions || 0}회</span>
-                        </div>
-                      </td>
-                      <td>
-                        <span className={`status-badge ${customer.status}`}>
-                          {customer.status === 'active' ? '활성' : '대기'}
+          <DataTable
+            data={sortedCustomers}
+            columns={[
+              {
+                header: '이름',
+                key: 'name',
+                sortable: true,
+                render: (customer) => (
+                  <div className="name-cell">
+                    <div className="avatar">{customer.name[0]}</div>
+                    <div className="name-info">
+                      <div className="name">{customer.name}</div>
+                      {customer.memo && (
+                        <span title={customer.memo}>
+                          <FileText size={14} className="memo-indicator-icon" />
                         </span>
-                      </td>
-                      <td className="date-cell">{customer.date}</td>
-                      <td key="actions">
-                        <div className={`actions-cell ${activeMenuId === customer.id ? 'active' : ''}`}>
-                          <button 
-                            className="action-btn" 
-                            onClick={(e) => customer.id && handleActionClick(e, customer.id)}
-                          >
-                            <MoreVertical size={20} />
-                          </button>
-                          
-                          {activeMenuId === customer.id && createPortal(
-                            <div 
-                              className="action-dropdown portal-menu" 
-                              style={{ 
-                                position: 'absolute', 
-                                top: menuPosition.top, 
-                                left: menuPosition.left,
-                                zIndex: 10001
-                              }}
-                              onClick={(e) => e.stopPropagation()}
-                            >
-                              <button onClick={() => { handleEdit(customer); setActiveMenuId(null); }}>
-                                <Edit2 size={16} /> 수정하기
-                              </button>
-                              <button onClick={() => { handleViewHistory(customer); setActiveMenuId(null); }}>
-                                <Calendar size={16} /> 수업이력
-                              </button>
-                              <button className="delete" onClick={() => { customer.id && handleDelete(customer.id); setActiveMenuId(null); }}>
-                                <Trash2 size={16} /> 삭제하기
-                              </button>
-                            </div>,
-                            document.body
-                          )}
-                        </div>
-                      </td>
-                    </tr>
-                  ))
-                )}
-              </tbody>
-            </table>
-          </div>
+                      )}
+                    </div>
+                  </div>
+                )
+              },
+              {
+                header: '상세 정보',
+                key: 'nickname',
+                sortable: true,
+                render: (customer) => (
+                  <div className="contact-cell">
+                    <div className="contact-item">
+                      <span style={{ color: '#6366f1', fontWeight: 600 }}>@{customer.nickname}</span>
+                    </div>
+                    <div className="contact-item">
+                      <Phone size={12} /> {customer.phone}
+                    </div>
+                  </div>
+                )
+              },
+              {
+                header: '총 수업',
+                key: 'totalSessions',
+                sortable: true,
+                render: (customer) => (
+                  <div className="session-count">
+                    <Clock size={14} />
+                    <span>{customer.totalSessions || 0}회</span>
+                  </div>
+                )
+              },
+              {
+                header: '상태',
+                key: 'status',
+                sortable: true,
+                render: (customer) => (
+                  <span className={`status-badge ${customer.status}`}>
+                    {customer.status === 'active' ? '활성' : '대기'}
+                  </span>
+                )
+              },
+              {
+                header: '등록일',
+                key: 'date',
+                sortable: true,
+                className: 'date-cell'
+              },
+              {
+                header: '작업',
+                key: 'actions',
+                render: (customer) => (
+                  <div className={`actions-cell ${activeMenuId === customer.id ? 'active' : ''}`}>
+                    <button 
+                      className="action-btn" 
+                      onClick={(e) => customer.id && handleActionClick(e, customer.id)}
+                    >
+                      <MoreVertical size={20} />
+                    </button>
+                    
+                    {activeMenuId === customer.id && createPortal(
+                      <div 
+                        className="action-dropdown portal-menu" 
+                        style={{ 
+                          position: 'absolute', 
+                          top: menuPosition.top, 
+                          left: menuPosition.left,
+                          zIndex: 10001
+                        }}
+                        onClick={(e) => e.stopPropagation()}
+                      >
+                        <button onClick={() => { handleEdit(customer); setActiveMenuId(null); }}>
+                          <Edit2 size={16} /> 수정하기
+                        </button>
+                        <button className="delete" onClick={() => { customer.id && handleDelete(customer.id); setActiveMenuId(null); }}>
+                          <Trash2 size={16} /> 삭제하기
+                        </button>
+                      </div>,
+                      document.body
+                    )}
+                  </div>
+                )
+              }
+            ]}
+            loading={isLoading}
+            sortConfig={sortConfig}
+            onSort={requestSort}
+            onRowClick={handleViewHistory}
+            rowKey={(customer, index) => customer.id || index}
+          />
         </div>
       </section>
 
@@ -424,7 +417,7 @@ const CustomersPage = () => {
                 <h2>수업 이력</h2>
                 <span className="count-badge">{historyCustomer?.totalSessions || 0}회 완료</span>
               </div>
-              <p className="subtitle">{historyCustomer?.name} ({historyCustomer?.nickname}) 학생</p>
+              <p className="subtitle">{historyCustomer?.name} ({historyCustomer?.nickname})</p>
             </div>
             
             <div className="history-list">
@@ -441,7 +434,6 @@ const CustomersPage = () => {
                     <div className="history-info">
                       <div className="history-title">{session.eventTitle}</div>
                       <div className="history-time">
-                        <Clock size={12} />
                         <span>{formatSessionTime(session.startTime)} ~ {formatSessionTime(session.endTime)}</span>
                       </div>
                     </div>
