@@ -406,7 +406,7 @@ const CustomersPage = () => {
                     type="number" 
                     value={currentCustomer?.unitPrice || ''} 
                     onChange={(e) => setCurrentCustomer({...currentCustomer!, unitPrice: Number(e.target.value)})} 
-                    placeholder="예: 50000"
+                    placeholder="예: 30000"
                     min="0"
                     step="1000"
                   />
