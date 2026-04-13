@@ -4,6 +4,7 @@ import "@/styles/globals.scss";
 import "@/styles/layout/sidebar.scss";
 import { AuthProvider } from "@/context/AuthContext";
 import AppLayout from "@/components/layout/AppLayout";
+import { GoogleOAuthProvider } from '@react-oauth/google';
 
 import { generatePageMetadata } from "@/common/utils/metaUtils";
 
@@ -17,14 +18,20 @@ export default function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  // If NEXT_PUBLIC_GOOGLE_CLIENT_ID is undefined, fallback to an empty string to prevent crashing
+  // (the OAuth login will fail gracefully instead)
+  const googleClientId = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID || "";
+
   return (
     <html lang="ko">
       <body className={`${inter.variable} ${roboto.variable}`}>
-        <AuthProvider>
-          <AppLayout>
-            {children}
-          </AppLayout>
-        </AuthProvider>
+        <GoogleOAuthProvider clientId={googleClientId}>
+          <AuthProvider>
+            <AppLayout>
+              {children}
+            </AppLayout>
+          </AuthProvider>
+        </GoogleOAuthProvider>
       </body>
     </html>
   );

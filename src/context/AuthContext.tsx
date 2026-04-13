@@ -1,7 +1,8 @@
 "use client";
 
 import React, { createContext, useContext, useEffect, useState } from "react";
-import { onAuthStateChanged, signInWithPopup, signOut, User, GoogleAuthProvider } from "firebase/auth";
+import { onAuthStateChanged, signInWithCredential, signOut, User, GoogleAuthProvider } from "firebase/auth";
+import { useGoogleLogin } from '@react-oauth/google';
 import { auth, googleProvider, db } from "@/lib/firebase";
 import { doc, getDoc, setDoc, updateDoc } from "firebase/firestore";
 import { useRouter } from "next/navigation";
@@ -39,29 +40,43 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
-  const loginWithGoogle = async () => {
-    try {
-      const result = await signInWithPopup(auth, googleProvider);
-      
-      const credential = GoogleAuthProvider.credentialFromResult(result);
-      if (credential) {
-        const token = credential.accessToken || null;
+  const googleLogin = useGoogleLogin({
+    flow: 'auth-code',
+    scope: 'openid email profile https://www.googleapis.com/auth/calendar.readonly',
+    onSuccess: async ({ code }) => {
+      try {
+        const response = await fetch('/api/auth/exchange', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ code }),
+        });
+        const data = await response.json();
         
-        // This is the CRITICAL part: capturing the refresh token
-        // result._tokenResponse usually contains the refreshToken for Google offline access
-        const refreshToken = (result as any)._tokenResponse?.refreshToken || null;
-
-        setGoogleAccessToken(token);
-        if (token) localStorage.setItem('googleAccessToken', token);
-        
-        if (result.user && refreshToken) {
-          const configDocRef = doc(db, "users", result.user.uid, "customers", "config");
-          await setDoc(configDocRef, { googleRefreshToken: refreshToken }, { merge: true });
+        if (data.error) {
+          throw new Error(data.error);
         }
+
+        if (data.id_token) {
+          const credential = GoogleAuthProvider.credential(data.id_token);
+          const result = await signInWithCredential(auth, credential);
+          
+          setGoogleAccessToken(data.access_token);
+          if (data.access_token) localStorage.setItem('googleAccessToken', data.access_token);
+          
+          if (result.user && data.refresh_token) {
+            const configDocRef = doc(db, "users", result.user.uid, "customers", "config");
+            await setDoc(configDocRef, { googleRefreshToken: data.refresh_token }, { merge: true });
+          }
+        }
+      } catch (error) {
+        console.error("Login exchange failed:", error);
       }
-    } catch (error) {
-      console.error("Login failed:", error);
-    }
+    },
+    onError: errorResponse => console.error("Google Login Failed", errorResponse),
+  });
+
+  const loginWithGoogle = async () => {
+    googleLogin();
   };
 
   const refreshGoogleAccessToken = React.useCallback(async (uid: string) => {

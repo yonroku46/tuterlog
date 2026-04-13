@@ -20,7 +20,8 @@ export interface Customer {
   name: string;
   nickname: string;
   phone: string;
-  status: 'active' | 'pending';
+  color?: string;
+  unitPrice?: number;
   memo?: string;
   date?: string;
   createdAt?: any;

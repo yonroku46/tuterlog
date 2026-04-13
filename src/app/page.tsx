@@ -13,7 +13,7 @@ import React, { useState, useEffect } from 'react';
 
 export default function Home() {
   const { user, googleAccessToken, loginWithGoogle, filterKeyword } = useAuth();
-  const [counts, setCounts] = useState({ weekly: 0, monthly: 0 });
+  const [counts, setCounts] = useState({ weekly: 0, monthly: 0, revenue: 0 });
   const [customerCount, setCustomerCount] = useState(0);
 
   useEffect(() => {
@@ -34,12 +34,41 @@ export default function Home() {
       const endOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59);
 
       try {
-        const [weeklyCount, monthlyCount, customerList] = await Promise.all([
+        const [weeklyCount, monthlyEvents, customerList] = await Promise.all([
           googleCalendarService.getEventCount(googleAccessToken, startOfWeek.toISOString(), endOfWeek.toISOString(), filterKeyword),
-          googleCalendarService.getEventCount(googleAccessToken, startOfMonth.toISOString(), endOfMonth.toISOString(), filterKeyword),
+          googleCalendarService.getEvents(googleAccessToken, startOfMonth.toISOString(), endOfMonth.toISOString()),
           customerService.getCustomers(user.uid)
         ]);
-        setCounts({ weekly: weeklyCount, monthly: monthlyCount });
+
+        let calculatedMonthlyCount = 0;
+
+        monthlyEvents.forEach((event: any) => {
+          const isTargetEvent = !filterKeyword || (event.summary && event.summary.toLowerCase().includes(filterKeyword.toLowerCase()));
+          if (isTargetEvent) {
+            calculatedMonthlyCount++;
+          }
+        });
+
+        // 실제 수업 완료 이력 기반 매출 계산
+        const historyPromises = customerList.map(c => 
+          c.id ? customerService.getClassHistory(user.uid, c.id) : Promise.resolve([])
+        );
+        const allHistories = await Promise.all(historyPromises);
+
+        let actualRevenue = 0;
+
+        customerList.forEach((customer, idx) => {
+          const history = allHistories[idx];
+          const completedThisMonth = history.filter(session => {
+            return session.startTime >= startOfMonth.toISOString() && session.startTime <= endOfMonth.toISOString();
+          });
+
+          if (completedThisMonth.length > 0 && customer.unitPrice) {
+            actualRevenue += (completedThisMonth.length * customer.unitPrice);
+          }
+        });
+
+        setCounts({ weekly: weeklyCount, monthly: calculatedMonthlyCount, revenue: actualRevenue });
         setCustomerCount(customerList.length);
       } catch (error) {
         console.error("Failed to fetch dashboard stats:", error);
@@ -115,9 +144,9 @@ export default function Home() {
           />
           <StatsCard 
             title="매출 현황" 
-            value="-" 
+            value={counts.revenue > 0 ? `${counts.revenue.toLocaleString()}원` : "0원"}
             icon={<Coins size={24} />} 
-            trend="준비중" 
+            trend="이번 달 누적 (완료 기준)" 
             trendUp={true} 
           />
         </section>

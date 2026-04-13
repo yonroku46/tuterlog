@@ -181,7 +181,27 @@ const CalendarPage = () => {
     if (shouldSendNoti) {
       try {
         console.log('Sending AlimTalk notification via external API...');
-        await new Promise(resolve => setTimeout(resolve, 800)); // Simulate network
+        
+        if (!customer.phone) {
+          alert('고객의 연락처(전화번호)가 등록되어 있지 않아 알림톡을 발송할 수 없습니다.');
+          return false;
+        }
+
+        const response = await fetch('/api/solapi', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            phone: customer.phone,
+            nickname: customer.nickname || customer.name
+          })
+        });
+
+        if (!response.ok) {
+          const errorData = await response.json();
+          throw new Error(errorData.error || '알림톡 발송 실패');
+        }
         
         const success = await recordSession();
         if (success) {
@@ -231,10 +251,16 @@ const CalendarPage = () => {
       const hasEvents = dayEvents.length > 0;
       const isToday = new Date().getDate() === day && new Date().getMonth() === month && new Date().getFullYear() === year;
       
+      const hasUncompletedPastEvent = dayEvents.some(event => {
+        const isCompleted = completedEventIds.includes(event.id);
+        const isPastEndTime = new Date() > new Date(event.end?.dateTime || event.end?.date || 0);
+        return isPastEndTime && !isCompleted && event.summary?.includes(filterKeyword);
+      });
+      
       cells.push(
         <div 
           key={day} 
-          className={`day-cell ${selectedDay === day ? 'selected' : ''} ${isToday ? 'today' : ''} ${hasEvents ? 'has-events' : ''}`}
+          className={`day-cell ${selectedDay === day ? 'selected' : ''} ${isToday ? 'today' : ''} ${hasEvents ? 'has-events' : ''} ${hasUncompletedPastEvent ? 'needs-action-day' : ''}`}
           onClick={() => setSelectedDay(day)}
         >
           <div className="day-number">{day}</div>
@@ -345,18 +371,32 @@ const CalendarPage = () => {
                            event.summary.startsWith(c.nickname + " ");
                   });
 
-                  // We need to check if this event has been completed.
-                  // For simplicity, we can check if the customer's totalSessions count changed, 
-                  // but a better way is to check the actual sessions.
-                  // In a real app, we'd fetch the day's sessions. 
-                  // Let's assume we can check against a local state of completed IDs for now.
                   const isCompleted = completedEventIds.includes(event.id);
+                  const isPastEndTime = new Date() > new Date(event.end?.dateTime || event.end?.date || 0);
+                  const needsAction = isPastEndTime && !isCompleted && event.summary?.includes(filterKeyword);
+                  
+                  const getContrastYIQ = (hexcolor: string) => {
+                    if (!hexcolor) return '#FFFFFF';
+                    const hex = hexcolor.replace("#", "");
+                    if (hex.length !== 6) return '#FFFFFF';
+                    const r = parseInt(hex.substr(0, 2), 16);
+                    const g = parseInt(hex.substr(2, 2), 16);
+                    const b = parseInt(hex.substr(4, 2), 16);
+                    const yiq = ((r * 299) + (g * 587) + (b * 114)) / 1000;
+                    return (yiq >= 128) ? '#000000' : '#FFFFFF';
+                  };
                   
                   return (
                     <div key={idx} className={`agenda-item ${isFocused ? 'focused' : ''} ${matchingCustomer ? 'has-customer' : ''} ${isCompleted ? 'completed' : ''}`}>
                       {matchingCustomer && (
                         <div className="customer-profile">
-                          <div className="avatar-circle">
+                          <div 
+                            className="avatar-circle"
+                            style={{
+                              backgroundColor: matchingCustomer.color || '#4f46e5',
+                              color: getContrastYIQ(matchingCustomer.color || '#4f46e5')
+                            }}
+                          >
                             {matchingCustomer.name.charAt(0)}
                           </div>
                           <span className="customer-nickname">{matchingCustomer.nickname}</span>
@@ -376,15 +416,15 @@ const CalendarPage = () => {
                             </div>
                           ) : (
                             <button 
-                              className="done-btn" 
+                              className={`done-btn ${needsAction ? 'pulse-accent' : ''}`} 
                               onClick={() => {
                                 handleFinishClass(event, matchingCustomer).then(success => {
                                   if (success) setCompletedEventIds(prev => [...prev, event.id]);
                                 });
                               }}
-                              disabled={new Date() < new Date(event.end?.dateTime || event.end?.date || 0)}
+                              disabled={!isPastEndTime}
                             >
-                              수업종료
+                              수업종료 {needsAction && ' (미완료)'}
                             </button>
                           )
                         )}

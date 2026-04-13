@@ -10,6 +10,17 @@ import "@/styles/pages/dashboard.scss";
 import { customerService, Customer, ClassSession } from '@/services/customerService';
 import DataTable from '@/components/ui/DataTable';
 
+const getContrastYIQ = (hexcolor: string) => {
+  if (!hexcolor) return '#FFFFFF';
+  const hex = hexcolor.replace("#", "");
+  if (hex.length !== 6) return '#FFFFFF';
+  const r = parseInt(hex.substr(0, 2), 16);
+  const g = parseInt(hex.substr(2, 2), 16);
+  const b = parseInt(hex.substr(4, 2), 16);
+  const yiq = ((r * 299) + (g * 587) + (b * 114)) / 1000;
+  return (yiq >= 128) ? '#000000' : '#FFFFFF';
+};
+
 const CustomersPage = () => {
   const { user, loading: authLoading } = useAuth();
   const router = useRouter();
@@ -72,7 +83,7 @@ const CustomersPage = () => {
   }, [user]);
 
   const handleAdd = () => {
-    setCurrentCustomer({ name: '', nickname: '', phone: '', status: 'active' });
+    setCurrentCustomer({ name: '', nickname: '', phone: '', color: '#4f46e5', unitPrice: 0 });
     setIsModalOpen(true);
   };
 
@@ -233,19 +244,30 @@ const CustomersPage = () => {
                 header: '이름',
                 key: 'name',
                 sortable: true,
-                render: (customer) => (
-                  <div className="name-cell">
-                    <div className="avatar">{customer.name[0]}</div>
-                    <div className="name-info">
-                      <div className="name">{customer.name}</div>
-                      {customer.memo && (
-                        <span title={customer.memo}>
-                          <FileText size={14} className="memo-indicator-icon" />
-                        </span>
-                      )}
+                render: (customer) => {
+                  const bgColor = customer.color || '#4f46e5';
+                  return (
+                    <div className="name-cell">
+                      <div 
+                        className="avatar" 
+                        style={{ 
+                          backgroundColor: bgColor, 
+                          color: getContrastYIQ(bgColor) 
+                        }}
+                      >
+                        {customer.name[0]}
+                      </div>
+                      <div className="name-info">
+                        <div className="name">{customer.name}</div>
+                        {customer.memo && (
+                          <span title={customer.memo}>
+                            <FileText size={14} className="memo-indicator-icon" />
+                          </span>
+                        )}
+                      </div>
                     </div>
-                  </div>
-                )
+                  );
+                }
               },
               {
                 header: '상세 정보',
@@ -263,6 +285,16 @@ const CustomersPage = () => {
                 )
               },
               {
+                header: '수업 단가',
+                key: 'unitPrice',
+                sortable: true,
+                render: (customer) => (
+                  <div className="unit-price" style={{ fontWeight: 600, color: '#334155' }}>
+                    {customer.unitPrice ? `${customer.unitPrice.toLocaleString()}원` : '-'}
+                  </div>
+                )
+              },
+              {
                 header: '총 수업',
                 key: 'totalSessions',
                 sortable: true,
@@ -271,16 +303,6 @@ const CustomersPage = () => {
                     <Clock size={14} />
                     <span>{customer.totalSessions || 0}회</span>
                   </div>
-                )
-              },
-              {
-                header: '상태',
-                key: 'status',
-                sortable: true,
-                render: (customer) => (
-                  <span className={`status-badge ${customer.status}`}>
-                    {customer.status === 'active' ? '활성' : '대기'}
-                  </span>
                 )
               },
               {
@@ -341,18 +363,6 @@ const CustomersPage = () => {
             
             <div className="modal-header">
               <h2>{currentCustomer?.id ? '고객 정보 수정' : '신규 고객 등록'}</h2>
-              <div 
-                className={`status-toggle ${currentCustomer?.status === 'pending' ? 'pending' : 'active'}`}
-                onClick={() => setCurrentCustomer({
-                  ...currentCustomer!, 
-                  status: currentCustomer?.status === 'pending' ? 'active' : 'pending'
-                })}
-              >
-                <div className="toggle-track">
-                  <div className="toggle-thumb" />
-                </div>
-                <span>{currentCustomer?.status === 'pending' ? '비활성' : '활성'}</span>
-              </div>
             </div>
             
             <form onSubmit={handleSubmit}>
@@ -379,15 +389,41 @@ const CustomersPage = () => {
                 </div>
               </div>
 
+              <div className="form-row">
+                <div className="form-group">
+                  <label>연락처</label>
+                  <input 
+                    type="tel" 
+                    value={currentCustomer?.phone || ''} 
+                    onChange={(e) => setCurrentCustomer({...currentCustomer!, phone: e.target.value})} 
+                    placeholder="010-0000-0000"
+                    required 
+                  />
+                </div>
+                <div className="form-group">
+                  <label>수업 단가 (원)</label>
+                  <input 
+                    type="number" 
+                    value={currentCustomer?.unitPrice || ''} 
+                    onChange={(e) => setCurrentCustomer({...currentCustomer!, unitPrice: Number(e.target.value)})} 
+                    placeholder="예: 50000"
+                    min="0"
+                    step="1000"
+                  />
+                </div>
+              </div>
+
               <div className="form-group">
-                <label>연락처</label>
-                <input 
-                  type="tel" 
-                  value={currentCustomer?.phone || ''} 
-                  onChange={(e) => setCurrentCustomer({...currentCustomer!, phone: e.target.value})} 
-                  placeholder="010-0000-0000"
-                  required 
-                />
+                <label>고객 식별 컬러</label>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                  <input 
+                    type="color" 
+                    value={currentCustomer?.color || '#4f46e5'} 
+                    onChange={(e) => setCurrentCustomer({...currentCustomer!, color: e.target.value})}
+                    style={{ width: '40px', height: '40px', padding: '0', border: 'none', borderRadius: '4px', cursor: 'pointer' }}
+                  />
+                  <span style={{ fontSize: '13px', color: '#666' }}>아바타 배경색</span>
+                </div>
               </div>
 
               <div className="form-group">

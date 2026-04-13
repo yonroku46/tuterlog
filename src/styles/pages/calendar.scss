@@ -253,6 +253,29 @@ $tablet: 768px;
           justify-content: center;
         }
 
+        &.needs-action-day {
+          background: #fffbeb;
+          border-color: #fde68a;
+          position: relative;
+          
+          &::after {
+            content: '';
+            position: absolute;
+            top: 8px;
+            right: 8px;
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+            background: #f59e0b;
+            box-shadow: 0 0 0 2px white;
+          }
+
+          .day-number {
+            color: #b45309;
+            font-weight: 800;
+          }
+        }
+
         .day-number { font-size: 1rem; font-weight: 700; margin-bottom: 6px; }
 
         .event-indicators {
@@ -411,6 +434,20 @@ $tablet: 768px;
                 transform: translateY(-1px);
                 box-shadow: 0 4px 6px -1px rgba(16, 185, 129, 0.2);
                 svg { transform: scale(1.1); }
+              }
+            }
+
+            &.pulse-accent {
+              background: #f59e0b;
+              color: white;
+              border-color: #f59e0b;
+
+              @include hover {
+                &:not(:disabled):hover {
+                  background: #d97706;
+                  border-color: #d97706;
+                  box-shadow: 0 4px 6px -1px rgba(217, 119, 6, 0.2);
+                }
               }
             }
 
