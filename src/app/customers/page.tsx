@@ -1,7 +1,7 @@
 "use client";
 
-import React, { useState, useEffect } from 'react';
-import { Plus, Search, Filter, MoreVertical, Mail, Phone, X, Edit2, Trash2, FileText, Calendar, Clock, ChevronUp, ChevronDown, ArrowUpDown } from 'lucide-react';
+import React, { useState, useEffect, useMemo } from 'react';
+import { Plus, Search, MoreVertical, Users, Phone, X, Edit2, Trash2, FileText,  Clock } from 'lucide-react';
 import { createPortal } from 'react-dom';
 import { useAuth } from '@/hooks/useAuth';
 import { useRouter } from 'next/navigation';
@@ -36,6 +36,11 @@ const CustomersPage = () => {
   const [historyCustomer, setHistoryCustomer] = useState<Customer | null>(null);
   const [isHistoryLoading, setIsHistoryLoading] = useState(false);
   const [sortConfig, setSortConfig] = useState<{ key: string; direction: 'asc' | 'desc' } | null>({ key: 'date', direction: 'desc' });
+  const [systemUsers, setSystemUsers] = useState<any[]>([]);
+  const [selectedRecipientId, setSelectedRecipientId] = useState<string>('');
+
+  const ADMIN_EMAIL = 'mikmatoba@gmail.com'; 
+  const isAdmin = user?.email === ADMIN_EMAIL;
 
   useEffect(() => {
     if (!authLoading && !user) {
@@ -79,16 +84,23 @@ const CustomersPage = () => {
   };
 
   useEffect(() => {
-    fetchCustomers();
+    if (user) {
+      fetchCustomers();
+      if (user.email === ADMIN_EMAIL) {
+        customerService.getAllUsers().then(setSystemUsers).catch(console.error);
+      }
+    }
   }, [user]);
 
   const handleAdd = () => {
     setCurrentCustomer({ name: '', nickname: '', phone: '', color: '#4f46e5', unitPrice: 0 });
+    setSelectedRecipientId(user?.uid || '');
     setIsModalOpen(true);
   };
 
   const handleEdit = (customer: Customer) => {
     setCurrentCustomer(customer);
+    setSelectedRecipientId(customer.ownerId || user?.uid || '');
     setIsModalOpen(true);
   };
 
@@ -125,10 +137,12 @@ const CustomersPage = () => {
       const data = await customerService.getClassHistory(user.uid, historyCustomer.id);
       setHistoryData(data);
       fetchCustomers();
-      setHistoryCustomer({
-        ...historyCustomer,
-        totalSessions: (historyCustomer.totalSessions || 1) - 1
-      });
+      if (historyCustomer) {
+        setHistoryCustomer({
+          ...historyCustomer,
+          totalSessions: (historyCustomer.totalSessions || 1) - 1
+        });
+      }
     } catch (error) {
       console.error("Error deleting session:", error);
       alert("삭제 중 오류가 발생했습니다.");
@@ -156,12 +170,12 @@ const CustomersPage = () => {
   };
 
 
-  const sortedCustomers = React.useMemo(() => {
+  const sortedCustomers = useMemo(() => {
     const filtered = customers.filter(c => 
-      c.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      c.nickname.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      c.phone.includes(searchTerm) ||
-      (c.memo?.toLowerCase().includes(searchTerm.toLowerCase()))
+      (c.name?.toLowerCase() || '').includes(searchTerm.toLowerCase()) ||
+      (c.nickname?.toLowerCase() || '').includes(searchTerm.toLowerCase()) ||
+      (c.phone || '').includes(searchTerm) ||
+      (c.memo?.toLowerCase() || '').includes(searchTerm.toLowerCase())
     );
     
     if (sortConfig !== null) {
@@ -176,29 +190,28 @@ const CustomersPage = () => {
     return filtered;
   }, [customers, searchTerm, sortConfig]);
 
-  const sortedSessions = React.useMemo(() => {
-    const sortableSessions = [...historyData];
-    if (sortConfig !== null) {
-      sortableSessions.sort((a: any, b: any) => {
-        let aValue = a[sortConfig.key as keyof ClassSession] || '';
-        let bValue = b[sortConfig.key as keyof ClassSession] || '';
-        if (aValue < bValue) return sortConfig.direction === 'asc' ? -1 : 1;
-        if (aValue > bValue) return sortConfig.direction === 'asc' ? 1 : -1;
-        return 0;
-      });
-    }
-    return sortableSessions;
-  }, [historyData, sortConfig]);
-
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!user || !currentCustomer) return;
 
     try {
+      const finalOwnerId = isAdmin && selectedRecipientId ? selectedRecipientId : user.uid;
+      
       if (currentCustomer.id) {
-        await customerService.updateCustomer(user.uid, currentCustomer.id, currentCustomer);
+        await customerService.updateCustomer(user.uid, currentCustomer.id, {
+          ...currentCustomer,
+          ownerId: finalOwnerId
+        });
       } else {
-        await customerService.addCustomer(user.uid, currentCustomer as Omit<Customer, 'id' | 'createdAt'>);
+        await customerService.addCustomer(user.uid, {
+          name: currentCustomer.name || '',
+          nickname: currentCustomer.nickname || '',
+          phone: currentCustomer.phone || '',
+          color: currentCustomer.color || '#4f46e5',
+          unitPrice: currentCustomer.unitPrice || 0,
+          memo: currentCustomer.memo || '',
+          ownerId: finalOwnerId
+        });
       }
       setIsModalOpen(false);
       fetchCustomers();
@@ -244,7 +257,7 @@ const CustomersPage = () => {
                 header: '이름',
                 key: 'name',
                 sortable: true,
-                render: (customer) => {
+                render: (customer: Customer) => {
                   const bgColor = customer.color || '#4f46e5';
                   return (
                     <div className="name-cell">
@@ -255,7 +268,7 @@ const CustomersPage = () => {
                           color: getContrastYIQ(bgColor) 
                         }}
                       >
-                        {customer.name[0]}
+                        {customer.name?.[0] || '?'}
                       </div>
                       <div className="name-info">
                         <div className="name">{customer.name}</div>
@@ -273,7 +286,7 @@ const CustomersPage = () => {
                 header: '상세 정보',
                 key: 'nickname',
                 sortable: true,
-                render: (customer) => (
+                render: (customer: Customer) => (
                   <div className="contact-cell">
                     <div className="contact-item">
                       <span style={{ color: '#6366f1', fontWeight: 600 }}>@{customer.nickname}</span>
@@ -288,7 +301,7 @@ const CustomersPage = () => {
                 header: '수업 단가',
                 key: 'unitPrice',
                 sortable: true,
-                render: (customer) => (
+                render: (customer: Customer) => (
                   <div className="unit-price" style={{ fontWeight: 600, color: '#334155' }}>
                     {customer.unitPrice ? `${customer.unitPrice.toLocaleString()}원` : '-'}
                   </div>
@@ -298,7 +311,7 @@ const CustomersPage = () => {
                 header: '총 수업',
                 key: 'totalSessions',
                 sortable: true,
-                render: (customer) => (
+                render: (customer: Customer) => (
                   <div className="session-count">
                     <Clock size={14} />
                     <span>{customer.totalSessions || 0}회</span>
@@ -314,7 +327,7 @@ const CustomersPage = () => {
               {
                 header: '작업',
                 key: 'actions',
-                render: (customer) => (
+                render: (customer: Customer) => (
                   <div className={`actions-cell ${activeMenuId === customer.id ? 'active' : ''}`}>
                     <button 
                       className="action-btn" 
@@ -372,7 +385,7 @@ const CustomersPage = () => {
                   <input 
                     type="text" 
                     value={currentCustomer?.name || ''} 
-                    onChange={(e) => setCurrentCustomer({...currentCustomer!, name: e.target.value})} 
+                    onChange={(e) => setCurrentCustomer(prev => prev ? {...prev, name: e.target.value} : null)} 
                     placeholder="홍길동"
                     required 
                   />
@@ -382,7 +395,7 @@ const CustomersPage = () => {
                   <input 
                     type="text" 
                     value={currentCustomer?.nickname || ''} 
-                    onChange={(e) => setCurrentCustomer({...currentCustomer!, nickname: e.target.value})} 
+                    onChange={(e) => setCurrentCustomer(prev => prev ? {...prev, nickname: e.target.value} : null)} 
                     placeholder="길동이"
                     required 
                   />
@@ -395,7 +408,7 @@ const CustomersPage = () => {
                   <input 
                     type="tel" 
                     value={currentCustomer?.phone || ''} 
-                    onChange={(e) => setCurrentCustomer({...currentCustomer!, phone: e.target.value})} 
+                    onChange={(e) => setCurrentCustomer(prev => prev ? {...prev, phone: e.target.value} : null)} 
                     placeholder="010-0000-0000"
                     required 
                   />
@@ -405,7 +418,7 @@ const CustomersPage = () => {
                   <input 
                     type="number" 
                     value={currentCustomer?.unitPrice || ''} 
-                    onChange={(e) => setCurrentCustomer({...currentCustomer!, unitPrice: Number(e.target.value)})} 
+                    onChange={(e) => setCurrentCustomer(prev => prev ? {...prev, unitPrice: Number(e.target.value)} : null)} 
                     placeholder="예: 30000"
                     min="0"
                     step="1000"
@@ -419,7 +432,7 @@ const CustomersPage = () => {
                   <input 
                     type="color" 
                     value={currentCustomer?.color || '#4f46e5'} 
-                    onChange={(e) => setCurrentCustomer({...currentCustomer!, color: e.target.value})}
+                    onChange={(e) => setCurrentCustomer(prev => prev ? {...prev, color: e.target.value} : null)}
                     style={{ width: '40px', height: '40px', padding: '0', border: 'none', borderRadius: '4px', cursor: 'pointer' }}
                   />
                   <span style={{ fontSize: '13px', color: '#666' }}>아바타 배경색</span>
@@ -430,14 +443,61 @@ const CustomersPage = () => {
                 <label>메모</label>
                 <textarea 
                   value={currentCustomer?.memo || ''} 
-                  onChange={(e) => setCurrentCustomer({...currentCustomer!, memo: e.target.value})} 
+                  onChange={(e) => setCurrentCustomer(prev => prev ? {...prev, memo: e.target.value} : null)} 
                   placeholder="특이사항을 입력하세요 (예: 수업료 매달 5일 선입금)"
                   rows={4}
                 />
               </div>
-              <div className="modal-actions">
-                <button type="button" className="btn-cancel" onClick={() => setIsModalOpen(false)}>취소</button>
-                <button type="submit" className="btn-submit">저장</button>
+
+              {isAdmin && (
+                <div className="admin-send-area" style={{ 
+                  marginTop: '15px', 
+                  padding: '15px', 
+                  backgroundColor: 'rgba(79, 70, 229, 0.05)', 
+                  borderRadius: '12px',
+                  border: '1px dashed rgba(79, 70, 229, 0.2)',
+                  marginBottom: '15px'
+                }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '10px', color: '#4f46e5', fontWeight: 'bold', fontSize: '14px' }}>
+                    <Users size={18} />
+                    전송 대상 선택 및 이메일 관리
+                  </div>
+                  <select 
+                    value={selectedRecipientId}
+                    onChange={(e) => setSelectedRecipientId(e.target.value)}
+                    style={{ 
+                      width: '100%', 
+                      padding: '10px', 
+                      borderRadius: '8px', 
+                      border: '1px solid #ddd',
+                      backgroundColor: '#fff',
+                      fontSize: '14px'
+                    }}
+                  >
+                    <option value={user?.uid || ''}>내가 가지기 (저장)</option>
+                    {systemUsers.filter(su => su.id !== user?.uid).map((su) => (
+                      <option key={su.id} value={su.id}>
+                        {su.name} ({su.email})
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              )}
+              
+              <div className="modal-actions" style={{ display: 'flex', gap: '10px', marginTop: '20px' }}>
+                <button type="button" className="btn-cancel" onClick={() => setIsModalOpen(false)} style={{ flex: 1 }}>취소</button>
+                <button type="submit" className="btn-submit" style={{ 
+                  flex: 1, 
+                  backgroundColor: selectedRecipientId !== user?.uid ? '#10b981' : '#4f46e5',
+                  color: 'white',
+                  padding: '10px',
+                  borderRadius: '8px',
+                  border: 'none',
+                  fontWeight: 'bold',
+                  cursor: 'pointer'
+                }}>
+                  {selectedRecipientId !== user?.uid ? (currentCustomer?.id ? '변경하여 전송' : '보내기') : '저장하기'}
+                </button>
               </div>
             </form>
           </div>

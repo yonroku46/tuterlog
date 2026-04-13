@@ -156,6 +156,14 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         try {
           const localFallback = localStorage.getItem(`filterKeyword_${firebaseUser.uid}`);
           if (localFallback) setFilterKeyword(localFallback);
+          
+          // Save basic user info for system user listing
+          const userDocRef = doc(db, "users", firebaseUser.uid);
+          await setDoc(userDocRef, { 
+            email: firebaseUser.email, 
+            name: firebaseUser.displayName || '이름 없음'
+          }, { merge: true }).catch(err => console.error(err));
+
           const configDocRef = doc(db, "users", firebaseUser.uid, "customers", "config");
           const configDoc = await getDoc(configDocRef);
           if (configDoc.exists()) {

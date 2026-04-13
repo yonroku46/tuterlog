@@ -12,22 +12,30 @@ const RecentHistoryTable = () => {
   const [sessions, setSessions] = useState<ClassSession[]>([]);
   const [loading, setLoading] = useState(true);
   const [sortConfig, setSortConfig] = useState<{ key: string; direction: 'asc' | 'desc' } | null>({ key: 'startTime', direction: 'desc' });
+  
+  const now = new Date();
+  const [selectedYear, setSelectedYear] = useState(now.getFullYear());
+  const [selectedMonth, setSelectedMonth] = useState(now.getMonth());
 
   useEffect(() => {
-    const fetchRecentSessions = async () => {
+    const fetchMonthlySessions = async () => {
       if (!user) return;
+      setLoading(true);
       try {
-        const data = await customerService.getRecentSessions(user.uid);
+        const data = await customerService.getMonthSessions(user.uid, selectedYear, selectedMonth);
         setSessions(data);
       } catch (error) {
-        console.error("Error fetching recent sessions:", error);
+        console.error("Error fetching monthly sessions:", error);
       } finally {
         setLoading(false);
       }
     };
 
-    fetchRecentSessions();
-  }, [user]);
+    fetchMonthlySessions();
+  }, [user, selectedYear, selectedMonth]);
+
+  const years = Array.from({ length: 5 }, (_, i) => now.getFullYear() - i);
+  const months = Array.from({ length: 12 }, (_, i) => i);
 
   const formatShortDate = (dateStr: string) => {
     if (!dateStr) return '';
@@ -47,6 +55,12 @@ const RecentHistoryTable = () => {
       direction = 'desc';
     }
     setSortConfig({ key, direction });
+  };
+
+  const handleToday = () => {
+    const today = new Date();
+    setSelectedYear(today.getFullYear());
+    setSelectedMonth(today.getMonth());
   };
 
   const sortedSessions = React.useMemo(() => {
@@ -116,11 +130,36 @@ const RecentHistoryTable = () => {
   return (
     <div className="content-card">
       <div className="card-header">
-        <div className="header-title">
-          <CalendarIcon size={18} className="header-icon" />
-          <h2>최근 수업 이력</h2>
+        <div className="history-filter-area">
+          <div className="title-filter-group">
+            <div className="header-title">
+              <CalendarIcon size={18} className="header-icon" />
+              <h2>수업 이력</h2>
+            </div>
+            
+            <div className="header-extra">
+              <Link href="/customers" className="view-all">학생별 보기</Link>
+            </div>
+
+            <div className="filter-controls">
+              <select 
+                value={selectedYear} 
+                onChange={(e) => setSelectedYear(Number(e.target.value))}
+              >
+                {years.map(y => <option key={y} value={y}>{y}년</option>)}
+              </select>
+
+              <select 
+                value={selectedMonth} 
+                onChange={(e) => setSelectedMonth(Number(e.target.value))}
+              >
+                {months.map(m => <option key={m} value={m}>{m + 1}월</option>)}
+              </select>
+              
+              <button className="btn-today" onClick={handleToday}>이번 달</button>
+            </div>
+          </div>
         </div>
-        <Link href="/customers" className="view-all">학생별 이력 보기</Link>
       </div>
       <DataTable
         data={sortedSessions}
@@ -131,19 +170,6 @@ const RecentHistoryTable = () => {
         emptyMessage="아직 기록된 수업 이력이 없습니다."
         rowKey={(session, index) => session.id || index}
       />
-      {!loading && sortedSessions.length === 0 && (
-        <div className="empty-state-action" style={{ textAlign: 'center', paddingBottom: '2rem' }}>
-          <Link href="/calendar" className="empty-action" style={{ 
-            display: 'inline-block',
-            padding: '0.6rem 1.25rem',
-            background: '#f5f6ff',
-            color: '#6366f1',
-            borderRadius: '0.75rem',
-            fontWeight: 700,
-            fontSize: '0.85rem'
-           }}>캘린더에서 수업 종료하기</Link>
-        </div>
-      )}
     </div>
   );
 };

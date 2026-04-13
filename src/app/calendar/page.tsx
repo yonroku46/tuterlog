@@ -226,7 +226,14 @@ const CalendarPage = () => {
   };
 
   const openGoogleCalendar = () => {
-    window.open('https://calendar.google.com/', '_blank');
+    // PWA 환경에서는 window.open 대신 현재 창에서 이동하는 것이 흰 화면 버그를 방지하는 데 더 효과적입니다.
+    const isPWA = (window.navigator as any).standalone || window.matchMedia('(display-mode: standalone)').matches;
+    
+    if (isPWA) {
+      window.location.href = 'https://calendar.google.com/';
+    } else {
+      window.open('https://calendar.google.com/', '_blank');
+    }
   };
 
   useEffect(() => {

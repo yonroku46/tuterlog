@@ -194,10 +194,6 @@
       gap: 0.75rem;
     }
   }
-
-  .section-container {
-    max-width: 100%;
-  }
 }
 
 .stats-card {
@@ -216,7 +212,6 @@
     padding: 1rem;
     border-radius: 0.85rem;
   }
-
 
   .icon-box {
     width: 42px;
@@ -290,26 +285,6 @@
         @media (max-width: $mobile) { font-size: 1rem; }
       }
     }
-
-    .view-all {
-      color: $primary-color;
-      font-size: 0.85rem;
-      font-weight: 700;
-      transition: all 0.2s;
-      &:hover { text-decoration: underline; }
-    }
-  }
-
-  .date-badge {
-    background: #f1f5f9;
-    padding: 0.35rem 0.75rem;
-    border-radius: 0.6rem;
-    font-size: 0.8rem;
-    font-weight: 800;
-    color: $primary-color;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
   }
 
   .summary-cell {
@@ -352,6 +327,158 @@
   }
 }
 
+.history-filter-area {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1.5rem;
+  width: 100%;
+
+  @media (max-width: $tablet) {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 1rem;
+  }
+
+  .title-filter-group {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    width: 100%;
+    gap: 1.5rem;
+
+    @media (max-width: $tablet) {
+      gap: 1rem;
+    }
+
+    .header-title {
+      margin-bottom: 0 !important;
+      @media (max-width: $tablet) {
+        flex: 1;
+      }
+    }
+
+    .header-extra {
+      order: 3;
+      margin-left: auto;
+      @media (max-width: $tablet) {
+        order: 2;
+        margin-left: 0;
+      }
+
+      .view-all {
+        font-size: 0.85rem;
+        font-weight: 700;
+        color: $primary-color;
+        text-decoration: none;
+        white-space: nowrap;
+        &:hover { text-decoration: underline; }
+      }
+    }
+
+    .filter-controls {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      background-color: #f1f5f9;
+      padding: 0.35rem;
+      border-radius: 0.85rem;
+      order: 2;
+
+      @media (max-width: $tablet) {
+        width: 100%;
+        order: 3;
+        justify-content: space-between;
+      }
+
+      select {
+        appearance: none;
+        background-color: white;
+        background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%2364748b' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
+        background-repeat: no-repeat;
+        background-position: right 0.6rem center;
+        background-size: 1rem;
+        border: 1px solid #e2e8f0;
+        padding: 0.45rem 2.22rem 0.45rem 1rem;
+        border-radius: 0.65rem;
+        font-size: 0.85rem;
+        font-weight: 700;
+        color: #334155;
+        cursor: pointer;
+        outline: none;
+        transition: all 0.2s;
+        
+        &:hover {
+          border-color: $primary-color;
+          color: $primary-color;
+          background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%236366f1' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
+        }
+      }
+
+      .btn-today {
+        padding: 0.45rem 0.85rem;
+        background: white;
+        border: 1px solid #e2e8f0;
+        border-radius: 0.65rem;
+        font-size: 0.8rem;
+        font-weight: 800;
+        color: #64748b;
+        cursor: pointer;
+        white-space: nowrap;
+        transition: all 0.2s;
+        &:hover { background: $primary-color; border-color: $primary-color; color: white; }
+      }
+    }
+  }
+}
+
+.legal-content-body {
+  color: #334155;
+  line-height: 1.8;
+
+  .last-updated {
+    color: #64748b;
+    font-size: 0.85rem;
+    margin-bottom: 2rem;
+  }
+
+  section {
+    margin-bottom: 2.5rem;
+    h3 {
+      font-size: 1.1rem;
+      font-weight: 800;
+      color: #1e293b;
+      margin-bottom: 1rem;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+
+      &::before {
+        content: "";
+        width: 4px;
+        height: 18px;
+        background-color: #6366f1;
+        border-radius: 2px;
+      }
+    }
+    ul {
+      padding-left: 1.5rem;
+      margin-top: 0.5rem;
+      li { margin-bottom: 0.4rem; }
+    }
+  }
+
+  .contact-footer {
+    margin-top: 3rem;
+    padding: 2rem;
+    background-color: #f8fafc;
+    border-radius: 1rem;
+    text-align: center;
+    font-size: 0.9rem;
+    color: #64748b;
+    border: 1px solid #e2e8f0;
+  }
+}
 
 @include hover {
   .home-dashboard {

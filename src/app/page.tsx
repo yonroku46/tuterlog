@@ -1,6 +1,7 @@
 "use client";
 
 import Image from 'next/image';
+import Link from 'next/link';
 import { useAuth } from '@/hooks/useAuth';
 import StatsCard from '@/components/dashboard/StatsCard';
 import RecentHistoryTable from '@/components/dashboard/RecentHistoryTable';
@@ -21,55 +22,33 @@ export default function Home() {
       if (!googleAccessToken || !user?.uid) return;
 
       const now = new Date();
-      
       const startOfWeek = new Date(now);
       startOfWeek.setDate(now.getDate() - now.getDay());
       startOfWeek.setHours(0, 0, 0, 0);
       
-      const endOfWeek = new Date(startOfWeek);
-      endOfWeek.setDate(startOfWeek.getDate() + 6);
-      endOfWeek.setHours(23, 59, 59, 999);
-
       const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
       const endOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59);
 
       try {
-        const [weeklyCount, monthlyEvents, customerList] = await Promise.all([
-          googleCalendarService.getEventCount(googleAccessToken, startOfWeek.toISOString(), endOfWeek.toISOString(), filterKeyword),
+        const [weeklyCount, monthlyEvents, customers, monthlyStats] = await Promise.all([
+          googleCalendarService.getEventCount(googleAccessToken, startOfWeek.toISOString(), new Date(startOfWeek.getTime() + 6 * 24 * 60 * 60 * 1000).toISOString(), filterKeyword),
           googleCalendarService.getEvents(googleAccessToken, startOfMonth.toISOString(), endOfMonth.toISOString()),
-          customerService.getCustomers(user.uid)
+          customerService.getCustomers(user.uid),
+          customerService.getMonthlyStats(user.uid, now.getFullYear(), now.getMonth())
         ]);
 
         let calculatedMonthlyCount = 0;
-
         monthlyEvents.forEach((event: any) => {
           const isTargetEvent = !filterKeyword || (event.summary && event.summary.toLowerCase().includes(filterKeyword.toLowerCase()));
-          if (isTargetEvent) {
-            calculatedMonthlyCount++;
-          }
+          if (isTargetEvent) calculatedMonthlyCount++;
         });
 
-        // 실제 수업 완료 이력 기반 매출 계산
-        const historyPromises = customerList.map(c => 
-          c.id ? customerService.getClassHistory(user.uid, c.id) : Promise.resolve([])
-        );
-        const allHistories = await Promise.all(historyPromises);
-
-        let actualRevenue = 0;
-
-        customerList.forEach((customer, idx) => {
-          const history = allHistories[idx];
-          const completedThisMonth = history.filter(session => {
-            return session.startTime >= startOfMonth.toISOString() && session.startTime <= endOfMonth.toISOString();
-          });
-
-          if (completedThisMonth.length > 0 && customer.unitPrice) {
-            actualRevenue += (completedThisMonth.length * customer.unitPrice);
-          }
+        setCounts({ 
+          weekly: weeklyCount, 
+          monthly: calculatedMonthlyCount, 
+          revenue: monthlyStats.totalRevenue 
         });
-
-        setCounts({ weekly: weeklyCount, monthly: calculatedMonthlyCount, revenue: actualRevenue });
-        setCustomerCount(customerList.length);
+        setCustomerCount(customers.length);
       } catch (error) {
         console.error("Failed to fetch dashboard stats:", error);
       }
@@ -77,14 +56,6 @@ export default function Home() {
 
     fetchStats();
   }, [googleAccessToken, filterKeyword, user]);
-
-  useEffect(() => {
-    if (!user) {
-      document.title = `로그인 | TuterLog`;
-    } else {
-      document.title = `대시보드 | TuterLog`;
-    }
-  }, [user]);
 
   if (!user) {
     return (
@@ -94,18 +65,18 @@ export default function Home() {
             <h1>TuterLog</h1>
             <p>언어 교육 스마트 매니저</p>
           </div>
-          
           <div className="login-methods">
             <button className="login-btn google" onClick={loginWithGoogle}>
               <Image src="/assets/icons/google.svg" alt="Google" width={22} height={22} />
               Google 계정으로 로그인
             </button>
           </div>
-
-          <p className="footer-note">
-            TuterLog는 선생님과 학생의 더 효율적인<br />
-            클래스 관리를 돕는 스마트 매니저입니다.
-          </p>
+          <p className="footer-note">TuterLog는 선생님과 학생의 더 효율적인 클래스 관리를 돕는 스마트 매니저입니다.</p>
+          <div className="legal-links">
+            <Link href="/docs/terms">서비스 이용약관</Link>
+            <span className="divider">|</span>
+            <Link href="/docs/privacy" className="bold">개인정보처리방침</Link>
+          </div>
         </div>
       </main>
     );
@@ -114,46 +85,22 @@ export default function Home() {
   return (
     <div className="home-dashboard">
       <header className="header">
-          <div className="title-area">
-            <h1>대시보드</h1>
-            <p>환영합니다, {user.displayName}님!</p>
-          </div>
-        </header>
+        <div className="title-area">
+          <h1>대시보드</h1>
+          <p>환영합니다, {user.displayName}님!</p>
+        </div>
+      </header>
 
-        <section className="stats-grid">
-          <StatsCard 
-            title="전체 고객" 
-            value={`${customerCount}명`} 
-            icon={<Users size={24} />} 
-            trend="현재 관리 중" 
-            trendUp={true} 
-          />
-          <StatsCard 
-            title="이번 주 스케줄" 
-            value={`${counts.weekly.toString()}건`} 
-            icon={<Calendar size={24} />} 
-            trend="현재 기준" 
-            trendUp={true} 
-          />
-          <StatsCard 
-            title="이번 달 스케줄" 
-            value={`${counts.monthly.toString()}건`} 
-            icon={<BarChart3 size={24} />} 
-            trend="현재 기준" 
-            trendUp={true} 
-          />
-          <StatsCard 
-            title="매출 현황" 
-            value={counts.revenue > 0 ? `${counts.revenue.toLocaleString()}원` : "0원"}
-            icon={<Coins size={24} />} 
-            trend="이번 달 누적 (완료 기준)" 
-            trendUp={true} 
-          />
-        </section>
+      <section className="stats-grid">
+        <StatsCard title="전체 고객" value={`${customerCount}명`} icon={<Users size={24} />} trend="현재 관리 중" trendUp={true} />
+        <StatsCard title="이번 주 스케줄" value={`${counts.weekly}건`} icon={<Calendar size={24} />} trend="현재 기준" trendUp={true} />
+        <StatsCard title="이번 달 스케줄" value={`${counts.monthly}건`} icon={<BarChart3 size={24} />} trend="현재 기준" trendUp={true} />
+        <StatsCard title="매출 현황" value={counts.revenue > 0 ? `${counts.revenue.toLocaleString()}원` : "0원"} icon={<Coins size={24} />} trend="이번 달 누적 (완료 기준)" trendUp={true} />
+      </section>
 
-        <section className="section-container">
-          <RecentHistoryTable />
-        </section>
+      <section className="section-container">
+        <RecentHistoryTable />
+      </section>
     </div>
   );
 }

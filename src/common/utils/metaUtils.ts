@@ -34,10 +34,10 @@ export function generatePageMetadata(type: MetadataType): Metadata {
 
   return {
     metadataBase: new URL(APP_URL),
-    title: {
-      default: `${title} | ${APP_NAME}`,
+    title: type === 'home' ? {
+      default: APP_NAME,
       template: `%s | ${APP_NAME}`,
-    },
+    } : title,
     description,
     keywords: ['고객관리', '강사관리', '클래스관리', '스케줄러', 'TuterLog', '튜터로그'],
     authors: [{ name: 'TuterLog' }],
