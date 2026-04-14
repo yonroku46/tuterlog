@@ -4,7 +4,7 @@ import React, { createContext, useContext, useEffect, useState } from "react";
 import { onAuthStateChanged, signInWithCredential, signOut, User, GoogleAuthProvider } from "firebase/auth";
 import { useGoogleLogin } from '@react-oauth/google';
 import { auth, googleProvider, db } from "@/lib/firebase";
-import { doc, getDoc, setDoc, updateDoc } from "firebase/firestore";
+import { doc, getDoc, setDoc, updateDoc, serverTimestamp } from "firebase/firestore";
 import { useRouter } from "next/navigation";
 import { DEFAULT_FILTER_KEYWORD } from "@/constants/config";
 
@@ -17,6 +17,7 @@ interface AuthContextType {
   logout: () => Promise<void>;
   updateFilterKeyword: (keyword: string) => Promise<void>;
   refreshGoogleAccessToken: (uid: string) => Promise<string | null>;
+  withdraw: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -37,6 +38,37 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       router.push("/");
     } catch (error) {
       console.error("Logout failed:", error);
+    }
+  };
+
+  const withdraw = async () => {
+    if (!auth.currentUser) return;
+    const uid = auth.currentUser.uid;
+    
+    try {
+      // 1. Mark user as deleted or clean up Firestore if possible (simplified for now)
+      // In a real production app, we'd use a Cloud Function to recursively delete subcollections
+      const userDocRef = doc(db, "users", uid);
+      await updateDoc(userDocRef, { 
+        status: 'withdrawn', 
+        withdrawnAt: serverTimestamp(),
+        email: `withdrawn_${uid}@deleted.com` // Anonymize
+      }).catch(() => {});
+      
+      // 2. Delete the user from Firebase Auth
+      await auth.currentUser.delete();
+      
+      // 3. Clear local state
+      await logout();
+      alert("회원 탈퇴가 완료되었습니다. 그동안 이용해 주셔서 감사합니다.");
+    } catch (error: any) {
+      console.error("Withdrawal failed:", error);
+      if (error.code === 'auth/requires-recent-login') {
+        alert("보안을 위해 다시 로그인한 후에 탈퇴를 진행해 주세요.");
+        await logout();
+      } else {
+        alert(`탈퇴 처리 중 오류가 발생했습니다: ${error.message}`);
+      }
     }
   };
 
@@ -187,7 +219,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   }, [router, refreshGoogleAccessToken]);
 
   return (
-    <AuthContext.Provider value={{ user, loading, googleAccessToken, filterKeyword, loginWithGoogle, logout, updateFilterKeyword, refreshGoogleAccessToken }}>
+    <AuthContext.Provider value={{ user, loading, googleAccessToken, filterKeyword, loginWithGoogle, logout, updateFilterKeyword, refreshGoogleAccessToken, withdraw }}>
       {children}
     </AuthContext.Provider>
   );

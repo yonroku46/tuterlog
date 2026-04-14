@@ -1,14 +1,15 @@
 "use client";
 
 import React, { useState, useEffect } from 'react';
-import { User, Bell, Shield, CreditCard, Save } from 'lucide-react';
+import { User, Bell, Shield, CreditCard, Save, Trash2 } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 import "@/styles/pages/settings.scss";
 import { updateProfile } from 'firebase/auth';
 import { auth } from '@/lib/firebase';
+import Image from 'next/image';
 
 const SettingsPage = () => {
-  const { user, filterKeyword, updateFilterKeyword } = useAuth();
+  const { user, filterKeyword, updateFilterKeyword, withdraw } = useAuth();
   const [activeTab, setActiveTab] = useState('profile');
   const [newName, setNewName] = useState(user?.displayName || '');
   const [tempKeyword, setTempKeyword] = useState(filterKeyword);
@@ -19,6 +20,17 @@ const SettingsPage = () => {
   }, [filterKeyword]);
 
   if (!user) return null;
+
+  const handleWithdraw = async () => {
+    try {
+      setIsUpdating(true);
+      await withdraw();
+    } catch (error) {
+      console.error("Withdrawal error:", error);
+    } finally {
+      setIsUpdating(false);
+    }
+  };
 
   const handleSaveAll = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -132,7 +144,48 @@ const SettingsPage = () => {
             </div>
           )}
           
-          {activeTab !== 'profile' && (
+          {activeTab === 'security' && (
+            <div className="tab-pane">
+              <h2>보안 및 계정 관리</h2>
+              
+              <div className="settings-section">
+                <h3>계정 연결 상태</h3>
+                <div className="connection-info">
+                  <div className="connection-item">
+                    <div className="brand">
+                      <Image src="/assets/icons/google.svg" alt="Google" width={20} height={20} />
+                      <span>Google 계정 연동됨</span>
+                    </div>
+                    <span className="status-badge active">연결됨</span>
+                  </div>
+                </div>
+              </div>
+
+              <div className="settings-section danger-zone">
+                <h3>위험 구역</h3>
+                <p className="section-desc">계정을 삭제하면 모든 수강생 데이터와 수업 기록이 영구적으로 삭제되며 복구할 수 없습니다.</p>
+                <button 
+                  className="btn-danger" 
+                  disabled={isUpdating}
+                  onClick={() => {
+                    if (confirm("정말로 TuterLog를 탈퇴하시겠습니까?\n모든 데이터가 영구적으로 삭제되며 이 작업은 되돌릴 수 없습니다.")) {
+                      const verification = prompt("실수를 방지하기 위해 '영구 삭제'라고 입력해 주세요.");
+                      if (verification === "영구 삭제") {
+                        handleWithdraw();
+                      } else if (verification !== null) {
+                        alert("문구가 일치하지 않습니다. 다시 시도해 주세요.");
+                      }
+                    }
+                  }}
+                >
+                  <Trash2 size={18} />
+                  {isUpdating ? '처리 중...' : '서비스 탈퇴 (데이터 삭제)'}
+                </button>
+              </div>
+            </div>
+          )}
+          
+          {activeTab !== 'profile' && activeTab !== 'security' && (
             <div className="tab-pane-empty">
               <div className="empty-state">
                 <p>준비 중인 기능입니다.</p>

@@ -196,12 +196,14 @@ const CustomersPage = () => {
 
     try {
       const finalOwnerId = isAdmin && selectedRecipientId ? selectedRecipientId : user.uid;
+      const isTransferring = finalOwnerId !== user.uid;
       
       if (currentCustomer.id) {
         await customerService.updateCustomer(user.uid, currentCustomer.id, {
           ...currentCustomer,
           ownerId: finalOwnerId
         });
+        alert(isTransferring ? "고객 정보가 해당 유저에게 성공적으로 전송되었습니다." : "고객 정보가 수정되었습니다.");
       } else {
         await customerService.addCustomer(user.uid, {
           name: currentCustomer.name || '',
@@ -212,11 +214,13 @@ const CustomersPage = () => {
           memo: currentCustomer.memo || '',
           ownerId: finalOwnerId
         });
+        alert(isTransferring ? "신규 고객 정보가 해당 유저에게 성공적으로 전송되었습니다." : "새로운 고객이 성공적으로 등록되었습니다.");
       }
       setIsModalOpen(false);
       fetchCustomers();
     } catch (error) {
       console.error("Error saving customer:", error);
+      alert("처리 중 오류가 발생했습니다.");
     }
   };
 

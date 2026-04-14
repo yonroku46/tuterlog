@@ -89,17 +89,17 @@
 
   .dashboard-main-content {
     flex: 1;
+    min-width: 0;
     margin-left: 260px;
     padding: 2.5rem;
     transition: $transition-base;
-    width: 100%;
-    max-width: 100%;
-    min-width: 0;
 
     @media (max-width: $tablet) {
       margin-left: 0;
+      width: 100%;
       padding: 1.25rem;
       padding-top: 5rem; 
+      box-sizing: border-box;
     }
 
     @media (max-width: $mobile) {
