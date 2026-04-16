@@ -64,7 +64,7 @@ const Sidebar = ({ onItemClick }: SidebarProps) => {
       )}
       <div className="sidebar-footer">
         <Link href="/docs/terms" onClick={onItemClick}>약관</Link>
-        <Link href="/docs/privacy" onClick={onItemClick} className="legal-bold">개인정보</Link>
+        <Link href="/docs/privacy" onClick={onItemClick}>개인정보</Link>
       </div>
     </aside>
   );
