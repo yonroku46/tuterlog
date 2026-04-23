@@ -80,7 +80,7 @@ export default function Home() {
           <div className="legal-links">
             <Link href="/docs/terms">서비스 이용약관</Link>
             <span className="divider">|</span>
-            <Link href="/docs/privacy" className="bold">개인정보처리방침</Link>
+            <Link href="/docs/privacy">개인정보처리방침</Link>
           </div>
         </div>
       </main>

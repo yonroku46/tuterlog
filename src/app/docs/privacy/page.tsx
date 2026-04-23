@@ -33,11 +33,34 @@ export default function PrivacyPolicyPage() {
           <div className="legal-content-body">
             <div className="last-updated">최종 수정일: {lastUpdated}</div>
 
+            {/* Google Compliance Section - Make this very prominent */}
+            <div className="google-disclosure-box" style={{ 
+              padding: '1.5rem', 
+              backgroundColor: '#f0fdf4', 
+              border: '1px solid #bbf7d0', 
+              borderRadius: '1rem',
+              marginBottom: '2.5rem',
+              color: '#166534',
+              fontSize: '0.95rem',
+              lineHeight: '1.6'
+            }}>
+              <h3 style={{ color: '#14532d', marginBottom: '0.75rem', fontSize: '1.1rem', border: 'none', padding: 0 }}>
+                Google API 유저 데이터 정책 준수 안내
+              </h3>
+              <p style={{ marginBottom: '1rem' }}>
+                TuterLog는 사용자의 구글 계정 데이터(Google user data)를 투명하고 안전하게 처리하며, Google API 서비스 사용자 데이터 정책을 엄격히 준수합니다.
+              </p>
+              <div style={{ fontWeight: 700, fontStyle: 'italic', color: '#15803d', padding: '1rem', background: 'white', borderRadius: '0.5rem', border: '1px dashed #86efac' }}>
+                "TuterLog's use and transfer to any other app of information received from Google APIs will adhere to <a href="https://developers.google.com/terms/api-services-user-data-policy" target="_blank" rel="noopener noreferrer" style={{ textDecoration: 'underline' }}>Google API Services User Data Policy</a>, including the Limited Use requirements."
+              </div>
+            </div>
+
             <section>
               <h3>1. 개인정보 수집 항목 및 방법</h3>
               <p>본 서비스는 로그인 및 핵심 기능 제공을 위해 다음과 같은 개인정보를 수집합니다.</p>
               <ul>
-                <li><strong>구글 인증 데이터 (OAuth 2.0)</strong>: 구글 계정 고유 식별자(UID), 이메일 주소, 이름, 프로필 이미지 URL</li>
+                <li><strong>구글 인증 데이터 (OAuth 2.0)</strong>: 구글 계정 고유 식별자(UID), 이메일 주소, 이름, 프로필 이미지 URL (필수)</li>
+                <li><strong>구글 캘린더 데이터</strong>: <code>https://www.googleapis.com/auth/calendar.readonly</code> 범위를 통해 조회된 수업 일정 정보 (선택)</li>
                 <li><strong>서비스 이용 데이터</strong>: 튜터가 직접 등록한 수강생 정보(성함, 연락처, 메모), 수업 예약 및 완료 이력</li>
                 <li><strong>자동 수집 항목</strong>: 서비스 접속 IP 정보, 브라우저 정보, 쿠키(로그인 세션 유지용)</li>
               </ul>
@@ -45,44 +68,43 @@ export default function PrivacyPolicyPage() {
 
             <section>
               <h3>2. 개인정보의 이용 목적</h3>
-              <p>수집된 개인정보는 다음의 구체적 목적으로만 사용됩니다.</p>
+              <p>수집된 개인정보는 사용자가 요청한 서비스 기능을 제공하기 위한 목적으로만 사용됩니다.</p>
               <ul>
-                <li><strong>사용자 인증</strong>: 구글 로그인을 통한 신원 확인 및 서비스 권한 관리</li>
-                <li><strong>서비스 제공</strong>: 수강생 관리, 수업 일정 동기화(구글 캘린더 연동), 매출 통계 산출</li>
-                <li><strong>고객 서비스</strong>: 서비스 오류 대응 및 기술 지원 문의 처리</li>
+                <li><strong>사용자 인증</strong>: 구글 로그인을 통한 본인 확인 및 서비스 보안 유지</li>
+                <li><strong>캘린더 연동 서비스</strong>: 구글 캘린더의 일정을 조회하여 TuterLog 대시보드에 표시하고, 수업 시간 및 매출 통계를 자동 산출</li>
+                <li><strong>기능 개선</strong>: 서비스 오류 대응 및 기술 지원 문의 처리</li>
               </ul>
             </section>
 
             <section>
-              <h3>3. 구글 사용자 데이터의 활용 및 공유 제한 (Limited Use Policy)</h3>
-              <p>TuterLog는 구글 보안 정책을 준수하며 다음과 같이 데이터를 관리합니다.</p>
+              <h3>3. 데이터 활용 및 공유 제한 (Limited Use & Sharing)</h3>
+              <p>TuterLog는 사용자의 구글 계정 데이터(Google user data)를 타인에게 판매하거나 승인되지 않은 용도로 절대 사용하지 않습니다.</p>
               <ul>
-                <li><strong>데이터 활용 범위</strong>: 구글 캘린더 데이터 (조회 권한)를 통해 수집된 정보는 오직 사용자의 수업 일정 확인 및 관리 서비스 제공을 위해서만 사용됩니다.</li>
-                <li><strong>데이터 공유 제한</strong>: 귀하의 구글 계정 데이터를 외부에 판매, 공유 또는 임대하지 않습니다.</li>
-                <li><strong>Limited Use 준수 사항</strong>: TuterLog가 Google API로부터 수집한 정보의 사용 및 타 앱으로의 전송은 <a href="https://developers.google.com/terms/api-services-user-data-policy" target="_blank" rel="noopener noreferrer">Google API 서비스 사용자 데이터 정책</a>(제한적 사용 요구사항 포함)을 준수합니다.</li>
-                <li>사용자의 데이터를 인공지능 학습 용도로 사용하거나 광고 서비스에 제공하지 않습니다.</li>
+                <li><strong>제3자 공유 금지</strong>: 사용자의 구글 계정 데이터는 원칙적으로 외부에 공유, 판매 또는 임대되지 않습니다. (단, 법적 의무가 있는 경우 제외)</li>
+                <li><strong>광고 및 AI 학습 활용 금지</strong>: 수집된 구글 계정 데이터는 광고 플랫폼에 제공되거나 인공지능(AI) 모델의 학습 자료로 활용되지 않습니다.</li>
+                <li><strong>전송 제한</strong>: 사용자가 명시적으로 요청한 기능 수행을 위해 필요한 범위를 벗어나 다른 앱으로 구글 계정 데이터를 전송하지 않습니다.</li>
               </ul>
-              <div className="limited-use-footnote">
-                "TuterLog's use and transfer to any other app of information received from Google APIs will adhere to <a href="https://developers.google.com/terms/api-services-user-data-policy" target="_blank" rel="noopener noreferrer">Google API Services User Data Policy</a>, including the Limited Use requirements."
+              <div style={{ marginTop: '1rem', padding: '1rem', borderTop: '1px solid #e2e8f0', color: '#64748b', fontSize: '0.85rem' }}>
+                <p style={{ margin: 0 }}>We use Google user data solely to provide and improve our service. We do not sell, share, or use Google user data for advertising purposes. We do not transfer Google user data to third parties except as necessary to provide our service or comply with legal obligations.</p>
               </div>
             </section>
 
             <section>
-              <h3>4. 개인정보의 보유 및 파기 절차</h3>
-              <p>본 서비스는 원칙적으로 서비스 탈퇴 시까지 데이터를보관하며, 탈퇴 시 관련 법령에 따른 보관 의무가 없는 한 모든 데이터를 즉시 파기합니다.</p>
-              <p><strong>데이터 삭제 방법</strong>: 사용자는 서비스 내 '설정' 메뉴를 통하거나 <a href="mailto:yr9601@gmail.com">yr9601@gmail.com</a>으로 직접 요청하여 언제든지 서비스 탈퇴 및 데이터 삭제를 진행할 수 있습니다.</p>
+              <h3>4. 개인정보의 보유 및 파기</h3>
+              <p>사용자가 서비스를 탈퇴하거나 구글 계정 연동을 해제하는 경우, 관련 수집 데이터는 즉시 또는 법정 보관 기간 내에 안전하게 파기됩니다.</p>
+              <p><strong>데이터 삭제 요청</strong>: 우측 하단 설정 메뉴 또는 <a href="mailto:yr9601@gmail.com" style={{ color: '#4f46e5', textDecoration: 'underline' }}>yr9601@gmail.com</a>을 통해 언제든지 데이터 완전 삭제를 요청할 수 있습니다.</p>
             </section>
 
             <section>
-              <h3>5. 개인정보 보호를 위한 보안 조치</h3>
-              <p>TuterLog는 구글 클라우드 및 Firebase 인프라를 사용하여 모든 데이터를 암호화하여 저장하며, 무단 접근을 방지하기 위해 엄격한 인증 시스템을 구축하고 있습니다.</p>
+              <h3>5. 보안 조치</h3>
+              <p>TuterLog는 데이터 보호를 위해 전송 시 암호화(HTTPS)를 적용하며, 전문적인 클라우드 보안 도구(Firebase Auth & Firestore Security Rules)를 사용하여 데이터 접근 권한을 관리합니다.</p>
             </section>
 
             <section>
-              <h3>6. 개인정보 보호 책임자 안내</h3>
-              <p>개인정보 관련 문의나 권리 행사가 필요하신 경우 아래 연락처로 문의해 주시기 바랍니다.</p>
-              <div className="contact-footer" style={{ marginTop: '1rem', textAlign: 'left', padding: '1.5rem' }}>
-                <strong>이메일</strong>: yr9601@gmail.com
+              <h3>6. 문의처</h3>
+              <p>개인정보 처리와 관련한 의문사항은 아래의 책임자에게 문의해 주십시오.</p>
+              <div className="contact-footer" style={{ marginTop: '1rem', textAlign: 'left', padding: '1.5rem', background: '#f8fafc', borderRadius: '1rem' }}>
+                <strong>문의</strong>: {lastUpdated && "yr9601@gmail.com"}
               </div>
             </section>
           </div>
