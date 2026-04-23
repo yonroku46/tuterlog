@@ -1,11 +1,11 @@
 "use client";
 
 import React, { useState, useEffect } from 'react';
-import { Calendar as CalendarIcon } from 'lucide-react';
 import Link from 'next/link';
 import { useAuth } from '@/hooks/useAuth';
 import { customerService, ClassSession } from '@/services/customerService';
 import DataTable, { Column } from '@/components/ui/DataTable';
+import MonthPicker from '@/components/ui/MonthPicker';
 
 const RecentHistoryTable = () => {
   const { user } = useAuth();
@@ -13,16 +13,14 @@ const RecentHistoryTable = () => {
   const [loading, setLoading] = useState(true);
   const [sortConfig, setSortConfig] = useState<{ key: string; direction: 'asc' | 'desc' } | null>({ key: 'startTime', direction: 'desc' });
   
-  const now = new Date();
-  const [selectedYear, setSelectedYear] = useState(now.getFullYear());
-  const [selectedMonth, setSelectedMonth] = useState(now.getMonth());
+  const [currentDate, setCurrentDate] = useState(new Date());
 
   useEffect(() => {
     const fetchMonthlySessions = async () => {
       if (!user) return;
       setLoading(true);
       try {
-        const data = await customerService.getMonthSessions(user.uid, selectedYear, selectedMonth);
+        const data = await customerService.getMonthSessions(user.uid, currentDate.getFullYear(), currentDate.getMonth());
         setSessions(data);
       } catch (error) {
         console.error("Error fetching monthly sessions:", error);
@@ -32,10 +30,11 @@ const RecentHistoryTable = () => {
     };
 
     fetchMonthlySessions();
-  }, [user, selectedYear, selectedMonth]);
+  }, [user, currentDate]);
 
-  const years = Array.from({ length: 5 }, (_, i) => now.getFullYear() - i);
-  const months = Array.from({ length: 12 }, (_, i) => i);
+  const handleMonthChange = (year: number, month: number) => {
+    setCurrentDate(new Date(year, month, 1));
+  };
 
   const formatShortDate = (dateStr: string) => {
     if (!dateStr) return '';
@@ -55,12 +54,6 @@ const RecentHistoryTable = () => {
       direction = 'desc';
     }
     setSortConfig({ key, direction });
-  };
-
-  const handleToday = () => {
-    const today = new Date();
-    setSelectedYear(today.getFullYear());
-    setSelectedMonth(today.getMonth());
   };
 
   const sortedSessions = React.useMemo(() => {
@@ -133,30 +126,12 @@ const RecentHistoryTable = () => {
         <div className="history-filter-area">
           <div className="title-filter-group">
             <div className="header-title">
-              <CalendarIcon size={18} className="header-icon" />
               <h2>수업 이력</h2>
+              <MonthPicker currentDate={currentDate} onChange={handleMonthChange} />
             </div>
             
             <div className="header-extra">
               <Link href="/customers" className="view-all">학생별 보기</Link>
-            </div>
-
-            <div className="filter-controls">
-              <select 
-                value={selectedYear} 
-                onChange={(e) => setSelectedYear(Number(e.target.value))}
-              >
-                {years.map(y => <option key={y} value={y}>{y}년</option>)}
-              </select>
-
-              <select 
-                value={selectedMonth} 
-                onChange={(e) => setSelectedMonth(Number(e.target.value))}
-              >
-                {months.map(m => <option key={m} value={m}>{m + 1}월</option>)}
-              </select>
-              
-              <button className="btn-today" onClick={handleToday}>이번 달</button>
             </div>
           </div>
         </div>

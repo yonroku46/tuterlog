@@ -143,7 +143,7 @@
 
 @include hover {
   .login-container .login-card .login-methods .login-btn:hover {
-    transform: translateY(-4px) scale(1.02);
+    transform: translateY(-4px);
     box-shadow: 0 12px 20px -5px rgba(0, 0, 0, 0.1);
     border-color: #cbd5e1;
   }

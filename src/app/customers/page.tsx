@@ -4,7 +4,7 @@ import React, { useState, useEffect, useMemo } from 'react';
 import { Plus, Search, MoreVertical, Users, Phone, X, Edit2, Trash2, FileText,  Clock } from 'lucide-react';
 import { createPortal } from 'react-dom';
 import { useAuth } from '@/hooks/useAuth';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import "@/styles/pages/customers.scss";
 import "@/styles/pages/dashboard.scss";
 import { customerService, Customer, ClassSession } from '@/services/customerService';
@@ -24,6 +24,7 @@ const getContrastYIQ = (hexcolor: string) => {
 const CustomersPage = () => {
   const { user, loading: authLoading } = useAuth();
   const router = useRouter();
+  const searchParams = useSearchParams();
   const [customers, setCustomers] = useState<Customer[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -41,6 +42,11 @@ const CustomersPage = () => {
 
   const ADMIN_EMAIL = 'mikmatoba@gmail.com'; 
   const isAdmin = user?.email === ADMIN_EMAIL;
+
+  useEffect(() => {
+    const search = searchParams?.get('search');
+    if (search) setSearchTerm(search);
+  }, [searchParams]);
 
   useEffect(() => {
     if (!authLoading && !user) {
@@ -121,6 +127,7 @@ const CustomersPage = () => {
     setIsHistoryLoading(true);
     try {
       const data = await customerService.getClassHistory(user.uid, customer.id);
+      console.log(data);
       setHistoryData(data);
     } catch (error) {
       console.error("Error fetching class history:", error);
@@ -432,14 +439,14 @@ const CustomersPage = () => {
 
               <div className="form-group">
                 <label>고객 식별 컬러</label>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                <div className="color-picker-wrapper">
                   <input 
                     type="color" 
+                    className="color-input"
                     value={currentCustomer?.color || '#4f46e5'} 
                     onChange={(e) => setCurrentCustomer(prev => prev ? {...prev, color: e.target.value} : null)}
-                    style={{ width: '40px', height: '40px', padding: '0', border: 'none', borderRadius: '4px', cursor: 'pointer' }}
                   />
-                  <span style={{ fontSize: '13px', color: '#666' }}>아바타 배경색</span>
+                  <span className="color-label">아바타 배경색</span>
                 </div>
               </div>
 

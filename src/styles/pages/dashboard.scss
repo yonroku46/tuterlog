@@ -136,7 +136,6 @@
       }
       p {
         color: $text-muted;
-        margin-top: 0.15rem;
         font-size: 0.9rem;
         @media (max-width: $mobile) { font-size: 0.85rem; }
       }
@@ -274,8 +273,7 @@
 
     .header-title {
       display: flex;
-      align-items: center;
-      gap: 0.65rem;
+      flex-direction: column;
       .header-icon { color: $primary-color; opacity: 0.8; }
       h2 {
         font-size: 1.15rem;
@@ -345,7 +343,7 @@
     align-items: center;
     flex-wrap: wrap;
     width: 100%;
-    gap: 1.5rem;
+    gap: 1rem;
 
     @media (max-width: $tablet) {
       gap: 1rem;

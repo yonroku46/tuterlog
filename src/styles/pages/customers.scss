@@ -199,6 +199,40 @@ $tablet: 768px;
         &:focus { outline: none; border-color: $primary-color; box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.05); }
       }
       textarea { resize: vertical; min-height: 90px; font-family: inherit; }
+
+      .color-picker-wrapper {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        margin-top: 0.25rem;
+
+        .color-input {
+          width: 44px;
+          height: 44px;
+          padding: 0;
+          border-radius: 0.75rem;
+          border: 2px solid #f1f5f9;
+          cursor: pointer;
+          background: none;
+          overflow: hidden;
+          transition: all 0.2s;
+
+          &::-webkit-color-swatch-wrapper { padding: 0; }
+          &::-webkit-color-swatch { border: none; border-radius: 0.6rem; }
+          
+          &:hover {
+            transform: scale(1.05);
+            border-color: $primary-color;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+          }
+        }
+
+        .color-label {
+          font-size: 0.8rem;
+          color: #64748b;
+          font-weight: 600;
+        }
+      }
     }
 
     .modal-actions {

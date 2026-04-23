@@ -1,12 +1,12 @@
 "use client";
 
-import React, { useState, useEffect, useRef } from 'react';
-import { ChevronLeft, ChevronRight, RefreshCw, AlertCircle, CheckCircle, ExternalLink, Calendar as CalendarIcon } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { ChevronLeft, ChevronRight, AlertCircle, CheckCircle, ExternalLink } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 import { useRouter } from 'next/navigation';
 import { googleCalendarService } from '@/services/googleCalendarService';
 import { customerService, Customer } from '@/services/customerService';
-import Image from 'next/image';
+import MonthPicker from '@/components/ui/MonthPicker';
 import "@/styles/pages/calendar.scss";
 
 const CalendarPage = () => {
@@ -18,23 +18,9 @@ const CalendarPage = () => {
   const [error, setError] = useState<string | null>(null);
   const [selectedDay, setSelectedDay] = useState<number | null>(new Date().getDate());
   const [completedEventIds, setCompletedEventIds] = useState<string[]>([]);
-  const [showPicker, setShowPicker] = useState(false);
   const [customers, setCustomers] = useState<Customer[]>([]);
-  const pickerRef = useRef<HTMLDivElement>(null);
 
-  useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      if (pickerRef.current && !pickerRef.current.contains(event.target as Node)) {
-        setShowPicker(false);
-      }
-    };
-    if (showPicker) {
-      document.addEventListener('mousedown', handleClickOutside);
-    }
-    return () => {
-      document.removeEventListener('mousedown', handleClickOutside);
-    };
-  }, [showPicker]);
+
 
   const formatTime = (dateStr: string | undefined) => {
     if (!dateStr) return '';
@@ -50,10 +36,7 @@ const CalendarPage = () => {
   const year = currentDate.getFullYear();
   const month = currentDate.getMonth();
 
-  const monthNames = ["1월", "2월", "3월", "4월", "5월", "6월", "7월", "8월", "9월", "10월", "11월", "12월"];
   const dayNames = ["일", "월", "화", "수", "목", "금", "토"];
-
-  const years = Array.from({ length: 11 }, (_, i) => year - 5 + i);
 
   const daysInMonth = (y: number, m: number) => new Date(y, m + 1, 0).getDate();
   const firstDayOfMonth = (y: number, m: number) => new Date(y, m, 1).getDay();
@@ -62,7 +45,6 @@ const CalendarPage = () => {
     setEvents({});
     setCurrentDate(new Date(newYear, newMonth, 1));
     setSelectedDay(null);
-    setShowPicker(false);
   };
 
   const fetchGoogleEvents = async () => {
@@ -154,7 +136,6 @@ const CalendarPage = () => {
 
     const shouldSendNoti = window.confirm(`[${event.summary}] 을 종료하시겠습니까?\n\n'확인'을 누르시면 종료 알림톡이 자동으로 발송됩니다.`);
     
-    // Core logic to record the session in DB
     const recordSession = async () => {
       try {
         if (!user?.uid) return;
@@ -166,7 +147,6 @@ const CalendarPage = () => {
           endTime: event.end?.dateTime || event.end?.date || new Date().toISOString()
         });
         
-        // Refresh customer list to update session counts on dashboard/sidebar if needed
         const updatedCustomers = await customerService.getCustomers(user.uid);
         setCustomers(updatedCustomers);
         
@@ -292,27 +272,7 @@ const CalendarPage = () => {
         <div className="header-top-row">
           <div className="title-section">
             <h1>일정 확인</h1>
-            <div className="date-selector" ref={pickerRef} onClick={() => setShowPicker(!showPicker)}>
-              <span>{year}년 {monthNames[month]}</span>
-              <CalendarIcon size={16} className="picker-icon" />
-              
-              {showPicker && (
-                <div className="picker-dropdown" onClick={e => e.stopPropagation()}>
-                  <div className="picker-grid">
-                    <div className="year-col">
-                      {years.map(y => (
-                        <button key={y} className={y === year ? 'active' : ''} onClick={() => handleMonthChange(y, month)}>{y}</button>
-                      ))}
-                    </div>
-                    <div className="month-col">
-                      {monthNames.map((m, idx) => (
-                        <button key={m} className={idx === month ? 'active' : ''} onClick={() => handleMonthChange(year, idx)}>{m}</button>
-                      ))}
-                    </div>
-                  </div>
-                </div>
-              )}
-            </div>
+            <MonthPicker currentDate={currentDate} onChange={handleMonthChange} />
           </div>
           <button onClick={openGoogleCalendar} className="google-link-btn">
             <ExternalLink size={16} />
@@ -393,8 +353,43 @@ const CalendarPage = () => {
                   
                   return (
                     <div key={idx} className={`agenda-item ${isFocused ? 'focused' : ''} ${matchingCustomer ? 'has-customer' : ''} ${isCompleted ? 'completed' : ''}`}>
+                      <div className="agenda-item-body">
+                        <div className="time-box">
+                          <span className="start">{formatTime(event.start?.dateTime || event.start?.date)}</span>
+                          <span className="end">~{formatTime(event.end?.dateTime || event.end?.date)}</span>
+                        </div>
+                        <div className="info-box">
+                          <div className="summary">{event.summary}</div>
+                          {event.summary?.includes(filterKeyword) && (
+                            isCompleted ? (
+                              <div className="completed-badge">
+                                <CheckCircle size={14} />
+                                <span>수업완료</span>
+                              </div>
+                            ) : (
+                              <button 
+                                className={`done-btn ${needsAction ? 'pulse-accent' : ''}`} 
+                                onClick={() => {
+                                  handleFinishClass(event, matchingCustomer).then(success => {
+                                    if (success) setCompletedEventIds(prev => [...prev, event.id]);
+                                  });
+                                }}
+                                disabled={!isPastEndTime}
+                              >
+                                수업종료 {needsAction && ' (미완료)'}
+                              </button>
+                            )
+                          )}
+                        </div>
+                      </div>
                       {matchingCustomer && (
-                        <div className="customer-profile">
+                        <div 
+                          className="customer-profile clickable"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            router.push(`/customers?search=${encodeURIComponent(matchingCustomer.nickname || matchingCustomer.name)}`);
+                          }}
+                        >
                           <div 
                             className="avatar-circle"
                             style={{
@@ -407,33 +402,6 @@ const CalendarPage = () => {
                           <span className="customer-nickname">{matchingCustomer.nickname}</span>
                         </div>
                       )}
-                      <div className="time-box">
-                        <span className="start">{formatTime(event.start?.dateTime || event.start?.date)}</span>
-                        <span className="end">~{formatTime(event.end?.dateTime || event.end?.date)}</span>
-                      </div>
-                      <div className="info-box">
-                        <div className="summary">{event.summary}</div>
-                        {event.summary?.includes(filterKeyword) && (
-                          isCompleted ? (
-                            <div className="completed-badge">
-                              <CheckCircle size={14} />
-                              <span>수업완료</span>
-                            </div>
-                          ) : (
-                            <button 
-                              className={`done-btn ${needsAction ? 'pulse-accent' : ''}`} 
-                              onClick={() => {
-                                handleFinishClass(event, matchingCustomer).then(success => {
-                                  if (success) setCompletedEventIds(prev => [...prev, event.id]);
-                                });
-                              }}
-                              disabled={!isPastEndTime}
-                            >
-                              수업종료 {needsAction && ' (미완료)'}
-                            </button>
-                          )
-                        )}
-                      </div>
                     </div>
                   );
                 })

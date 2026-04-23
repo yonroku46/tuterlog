@@ -1,5 +1,6 @@
 "use client";
 
+import React, { useState, useEffect } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { useAuth } from '@/hooks/useAuth';
@@ -10,31 +11,35 @@ import { googleCalendarService } from '@/services/googleCalendarService';
 import { customerService } from '@/services/customerService';
 import "@/styles/pages/dashboard.scss";
 import "@/styles/pages/login.scss";
-import React, { useState, useEffect } from 'react';
 
 export default function Home() {
   const { user, googleAccessToken, loginWithGoogle, filterKeyword } = useAuth();
   const [counts, setCounts] = useState({ weekly: 0, monthly: 0, revenue: 0 });
   const [customerCount, setCustomerCount] = useState(0);
+  const [currentDate, setCurrentDate] = useState(new Date());
 
   useEffect(() => {
     const fetchStats = async () => {
       if (!googleAccessToken || !user?.uid) return;
 
+      const startOfWeek = new Date(currentDate);
       const now = new Date();
-      const startOfWeek = new Date(now);
-      startOfWeek.setDate(now.getDate() - now.getDay());
+      const isCurrentMonth = currentDate.getMonth() === now.getMonth() && currentDate.getFullYear() === now.getFullYear();
+      
+      const weeklyRefDate = isCurrentMonth ? now : new Date(currentDate.getFullYear(), currentDate.getMonth(), 1);
+      startOfWeek.setTime(weeklyRefDate.getTime());
+      startOfWeek.setDate(weeklyRefDate.getDate() - weeklyRefDate.getDay());
       startOfWeek.setHours(0, 0, 0, 0);
       
-      const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
-      const endOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59);
+      const startOfMonth = new Date(currentDate.getFullYear(), currentDate.getMonth(), 1);
+      const endOfMonth = new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 0, 23, 59, 59);
 
       try {
         const [weeklyCount, monthlyEvents, customers, monthlyStats] = await Promise.all([
           googleCalendarService.getEventCount(googleAccessToken, startOfWeek.toISOString(), new Date(startOfWeek.getTime() + 6 * 24 * 60 * 60 * 1000).toISOString(), filterKeyword),
           googleCalendarService.getEvents(googleAccessToken, startOfMonth.toISOString(), endOfMonth.toISOString()),
           customerService.getCustomers(user.uid),
-          customerService.getMonthlyStats(user.uid, now.getFullYear(), now.getMonth())
+          customerService.getMonthlyStats(user.uid, currentDate.getFullYear(), currentDate.getMonth())
         ]);
 
         let calculatedMonthlyCount = 0;
@@ -55,7 +60,7 @@ export default function Home() {
     };
 
     fetchStats();
-  }, [googleAccessToken, filterKeyword, user]);
+  }, [googleAccessToken, filterKeyword, user, currentDate]);
 
   if (!user) {
     return (

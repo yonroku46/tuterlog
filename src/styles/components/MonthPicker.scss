@@ -1,0 +1,71 @@
+@use "../base/variables" as *;
+@use "../base/mixins" as *;
+
+.month-picker-container {
+  position: relative;
+  display: inline-block;
+
+  .date-selector {
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
+    cursor: pointer;
+    transition: all 0.2s;
+
+    &:hover {
+      color: $primary-color;
+    }
+
+    span {
+      font-size: 0.95rem;
+      font-weight: 700;
+    }
+
+    .picker-dropdown {
+      position: absolute;
+      top: 100%;
+      left: 0;
+      z-index: 1000;
+      background: $white;
+      border: 1px solid $border-color;
+      border-radius: 1rem;
+      box-shadow: $shadow-lg;
+      padding: 1rem;
+      margin-top: 0.5rem;
+      display: flex;
+      gap: 1rem;
+      width: max-content;
+
+      .picker-grid {
+        display: flex;
+        gap: 1rem;
+        max-height: 250px;
+        
+        .year-col, .month-col {
+          display: flex;
+          flex-direction: column;
+          overflow-y: auto;
+          padding-right: 0.5rem;
+          min-width: 85px;
+          &::-webkit-scrollbar { width: 4px; }
+          &::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
+
+          button {
+            padding: 0.5rem 1rem;
+            border: none;
+            background: none;
+            border-radius: 0.5rem;
+            font-weight: 500;
+            color: $text-muted;
+            cursor: pointer;
+            text-align: center;
+            white-space: nowrap;
+            
+            &.active { background: $primary-color !important; color: white !important; }
+            &:hover:not(.active) { background: #f1f5f9; color: $primary-color; }
+          }
+        }
+      }
+    }
+  }
+}

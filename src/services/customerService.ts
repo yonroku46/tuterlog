@@ -227,28 +227,39 @@ export const customerService = {
 
   async getClassHistory(userId: string, customerId: string): Promise<ClassSession[]> {
     try {
-      // 1. 현재 유저 폴더 내 세션
-      const ref = collection(db, "users", userId, "customers", customerId, "sessions");
-      const snap = await getDocs(ref);
-      const subSessions = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+      // 대시보드와 동일한 쿼리 사용 (인덱스 보장됨)
+      const sessionsRef = collectionGroup(db, "sessions");
+      const q = query(sessionsRef, where("userId", "==", userId));
+      const snap = await getDocs(q);
       
-      // 2. 루트 폴더 내 세션 (이관 전 데이터)
-      const rootSessionsRef = collection(db, "customers", customerId, "sessions");
-      const rootSnap = await getDocs(rootSessionsRef);
-      const rootSessions = rootSnap.docs.map(d => ({ id: d.id, ...d.data() }));
+      const filtered = snap.docs
+        .filter(d => {
+          const s = d.data();
+          const cid = s.customerId;
+          const path = d.ref.path;
+          
+          // 1. 문서 내부의 customerId 필드로 매칭
+          if (cid === customerId) return true;
+          // 2. 데이터베이스 경로상에 포함된 ID로 매칭 (가장 확실함)
+          if (path.includes(`customers/${customerId}/`)) return true;
+          return false;
+        })
+        .map(d => ({ id: d.id, ...d.data() }));
 
-      // 3. 중복 제거 (ID 기준) 및 정렬
-      const combined = [...subSessions];
-      rootSessions.forEach(rs => {
-        if (!combined.some(cs => cs.id === rs.id)) combined.push(rs);
-      });
+      // 문서 ID가 동일한 경우 하나만 남김 (이관 시 중복 생성 방지)
+      const uniqueSessions = Array.from(
+        new Map(filtered.map(s => [s.id, s])).values()
+      );
 
-      return combined.sort((a: any, b: any) => {
+      return uniqueSessions.sort((a: any, b: any) => {
         const tA = new Date(a.startTime).getTime();
         const tB = new Date(b.startTime).getTime();
         return tB - tA;
       }) as ClassSession[];
-    } catch (error) { return []; }
+    } catch (error) { 
+      console.error("이력 조회 에러:", error);
+      return []; 
+    }
   },
 
   async deleteClassSession(userId: string, customerId: string, sessionId: string) {

@@ -7,8 +7,6 @@ $tablet: 768px;
 
 .settings-content-wrapper {
   width: 100%;
-  max-width: 1000px;
-  margin: 0 auto;
 
   .header {
     margin-bottom: 2.5rem;
@@ -22,7 +20,6 @@ $tablet: 768px;
     }
     p {
       color: $text-muted;
-      margin-top: 0.25rem;
       font-size: 0.95rem;
     }
   }
@@ -130,7 +127,7 @@ $tablet: 768px;
       justify-content: center;
       font-size: 2rem;
       font-weight: 800;
-      border-radius: 2rem;
+      border-radius: 1.25rem;
       box-shadow: $shadow-md;
     }
 
@@ -277,6 +274,7 @@ $tablet: 768px;
     background-color: #fff1f2;
     border: 1px solid #fecdd3;
     border-radius: 1rem;
+    margin-bottom: 0;
     
     h3 {
       color: #e11d48 !important;

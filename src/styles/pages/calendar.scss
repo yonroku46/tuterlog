@@ -35,64 +35,6 @@ $tablet: 768px;
         display: flex;
         flex-direction: column;
         h1 { font-size: 1.75rem; font-weight: 800; color: $text-main; @media (max-width: $mobile) { font-size: 1.5rem; } }
-        
-        .date-selector {
-          display: flex;
-          align-items: center;
-          gap: 0.5rem;
-          cursor: pointer;
-          position: relative;
-          color: $text-muted;
-          font-weight: 600;
-          padding: 0.25rem 0.5rem;
-          border-radius: 0.5rem;
-          transition: background 0.2s;
-
-          .picker-icon { color: $primary-color; }
-
-          .picker-dropdown {
-            position: absolute;
-            top: 100%;
-            left: 0;
-            z-index: 1000;
-            background: $white;
-            border: 1px solid $border-color;
-            border-radius: 1rem;
-            box-shadow: $shadow-lg;
-            padding: 1rem;
-            margin-top: 0.5rem;
-            display: flex;
-            gap: 1rem;
-
-            .picker-grid {
-              display: flex;
-              gap: 1rem;
-              max-height: 250px;
-              
-              .year-col, .month-col {
-                display: flex;
-                flex-direction: column;
-                overflow-y: auto;
-                padding-right: 0.5rem;
-                &::-webkit-scrollbar { width: 4px; }
-                &::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
-
-                button {
-                  padding: 0.5rem 1rem;
-                  border: none;
-                  background: none;
-                  border-radius: 0.5rem;
-                  font-weight: 500;
-                  color: $text-muted;
-                  cursor: pointer;
-                  text-align: center;
-                  
-                  &.active { background: $primary-color; color: white; }
-                }
-              }
-            }
-          }
-        }
       }
 
       .google-link-btn {
@@ -101,7 +43,7 @@ $tablet: 768px;
         gap: 0.5rem;
         padding: 0.6rem 1.25rem;
         border-radius: 0.75rem;
-        background: #f8fafc;
+        background: #fff;
         border: 1px solid $border-color;
         color: #1e293b;
         font-weight: 700;
@@ -198,7 +140,6 @@ $tablet: 768px;
 
       @media (max-width: $tablet) {
         grid-auto-rows: auto;
-        gap: 4px;
         background: none;
         border: none;
       }
@@ -345,9 +286,9 @@ $tablet: 768px;
 
       .agenda-item {
         display: flex;
-        gap: 1rem;
+        flex-direction: column;
+        gap: 0.25rem;
         padding: 1rem;
-        padding-left: 1.25rem;
         background: #f8fafc;
         border-radius: 1rem;
         border: 1px solid transparent;
@@ -357,42 +298,57 @@ $tablet: 768px;
         &.focused { border-color: $primary-color; background: white; box-shadow: 0 4px 12px rgba(99, 102, 241, 0.08); }
 
         .customer-profile {
-          position: absolute;
-          bottom: 8px;
-          left: 8px;
-          z-index: 2;
           display: flex;
           align-items: center;
           gap: 6px;
-          background: rgba(255, 255, 255, 0.9);
-          padding: 3px 10px 3px 4px;
+          background: white;
+          padding: 2px 8px 2px 2px;
           border-radius: 2rem;
-          box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08), 0 1px 2px rgba(0, 0, 0, 0.04);
-          border: 1px solid rgba(226, 232, 240, 0.8);
-          backdrop-filter: blur(8px);
+          box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+          border: 1px solid $border-color;
+          width: fit-content;
+          margin-left: -0.25rem;
+          margin-bottom: -0.25rem;
           transition: all 0.2s;
 
+          &.clickable {
+            cursor: pointer;
+            @include hover {
+              &:hover {
+                transform: translateY(-1px);
+                box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12);
+                border-color: $primary-color;
+              }
+            }
+          }
+
           .avatar-circle {
-            width: 24px;
-            height: 24px;
+            width: 20px;
+            height: 20px;
             border-radius: 50%;
             background: linear-gradient(135deg, $primary-color, lighten($primary-color, 15%));
             color: white;
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 0.7rem;
+            font-size: 0.65rem;
             font-weight: 900;
             flex-shrink: 0;
             border: 1px solid white;
           }
 
           .customer-nickname {
-            font-size: 0.75rem;
+            font-size: 0.7rem;
             font-weight: 800;
             color: #1e293b;
             white-space: nowrap;
           }
+        }
+
+        .agenda-item-body {
+          display: flex;
+          gap: 1rem;
+          width: 100%;
         }
 
         .time-box {
@@ -402,6 +358,7 @@ $tablet: 768px;
           font-weight: 700;
           color: $text-muted;
           min-width: 50px;
+          padding-top: 0.1rem;
           .start { color: $primary-color; }
         }
 
@@ -409,7 +366,7 @@ $tablet: 768px;
           flex: 1;
           display: flex;
           flex-direction: column;
-          .summary { font-size: 0.9rem; font-weight: 700; color: $text-main; margin-bottom: 0.5rem; }
+          .summary { font-size: 0.85rem; font-weight: 700; color: $text-main; margin-bottom: 0.5rem; line-height: 1.4; }
           .done-btn {
             display: inline-flex;
             align-items: center;
@@ -487,7 +444,6 @@ $tablet: 768px;
 @include hover {
   .calendar-page-container {
     .page-header .header-top-row {
-      .date-selector:hover { background: rgba(0,0,0,0.05); }
       .google-link-btn:hover { background: white; border-color: $primary-color; color: $primary-color; transform: translateY(-1px); }
     }
     .page-header .header-actions .nav-group {
