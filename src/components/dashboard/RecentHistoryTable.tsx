@@ -131,7 +131,7 @@ const RecentHistoryTable = () => {
             </div>
             
             <div className="header-extra">
-              <Link href="/customers" className="view-all">학생별 보기</Link>
+              <Link href="/my/customers" className="view-all">학생별 보기</Link>
             </div>
           </div>
         </div>

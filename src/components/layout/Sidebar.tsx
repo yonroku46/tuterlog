@@ -16,15 +16,15 @@ const Sidebar = ({ onItemClick }: SidebarProps) => {
   const { user, logout } = useAuth();
   
   const navItems = [
-    { icon: <LayoutGrid size={20} />, label: '대시보드', href: '/' },
-    { icon: <Users size={20} />, label: '고객 관리', href: '/customers' },
-    { icon: <Calendar size={20} />, label: '일정 확인', href: '/calendar' },
-    { icon: <Settings size={20} />, label: '설정', href: '/settings' },
+    { icon: <LayoutGrid size={20} />, label: '대시보드', href: '/my/dashboard' },
+    { icon: <Users size={20} />, label: '고객 관리', href: '/my/customers' },
+    { icon: <Calendar size={20} />, label: '일정 확인', href: '/my/calendar' },
+    { icon: <Settings size={20} />, label: '설정', href: '/my/settings' },
   ];
 
   return (
     <aside className="sidebar">
-      <Link href="/">
+      <Link href="/my/dashboard">
         <div className="logo">
           <Image 
             src="/assets/icons/favicon.svg" 

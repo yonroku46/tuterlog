@@ -216,7 +216,7 @@ const CalendarPage = () => {
 
   useEffect(() => {
     if (!authLoading && !user) {
-      router.replace("/");
+      router.replace("/login");
     }
   }, [user, authLoading, router]);
 
@@ -387,7 +387,7 @@ const CalendarPage = () => {
                           className="customer-profile clickable"
                           onClick={(e) => {
                             e.stopPropagation();
-                            router.push(`/customers?search=${encodeURIComponent(matchingCustomer.nickname || matchingCustomer.name)}`);
+                            router.push(`/my/customers?search=${encodeURIComponent(matchingCustomer.nickname || matchingCustomer.name)}`);
                           }}
                         >
                           <div 

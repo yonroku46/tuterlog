@@ -97,7 +97,7 @@ const CustomerTable = () => {
         <div className="header-title">
           <h2>최근 등록 고객</h2>
         </div>
-        <Link href="/customers" className="view-all">전체 보기</Link>
+        <Link href="/my/customers" className="view-all">전체 보기</Link>
       </div>
       <DataTable
         data={customers}

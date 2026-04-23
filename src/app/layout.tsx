@@ -27,9 +27,7 @@ export default function RootLayout({
       <body className={`${inter.variable} ${roboto.variable}`}>
         <GoogleOAuthProvider clientId={googleClientId}>
           <AuthProvider>
-            <AppLayout>
-              {children}
-            </AppLayout>
+            {children}
           </AuthProvider>
         </GoogleOAuthProvider>
       </body>

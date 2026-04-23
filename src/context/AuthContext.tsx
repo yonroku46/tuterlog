@@ -178,7 +178,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       
       console.warn("Session truly expired or refresh failed. Logging out.");
       logout();
-      router.push("/");
+      router.push("/login");
     };
     window.addEventListener('auth-session-expired', handleSessionExpired);
 

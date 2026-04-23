@@ -71,7 +71,7 @@
         width: 48px;
         height: 48px;
         background: rgba(255, 255, 255, 0.2);
-        backdrop-filter: blur(8px);
+        backdrop-filter: blur(4px);
         border-radius: 12px;
         display: flex;
         align-items: center;
@@ -90,7 +90,7 @@
 
     .docs-body {
       padding: 3rem 2.5rem;
-      
+
       @media (max-width: $mobile) {
         padding: 2rem 1.5rem;
       }
@@ -105,6 +105,85 @@
         line-height: 1.6;
         border: 1px solid #e2e8f0;
         font-style: italic;
+
+        a {
+          color: $primary-color;
+          text-decoration: underline;
+          &:hover { opacity: 0.8; }
+        }
+      }
+    }
+
+    .legal-content-body {
+      .last-updated {
+        font-size: 0.8rem;
+        color: #94a3b8;
+        margin-bottom: 2rem;
+        padding-bottom: 1rem;
+        border-bottom: 1px solid $border-color;
+      }
+
+      section {
+        margin-bottom: 2rem;
+
+        h3 {
+          font-size: 1rem;
+          font-weight: 700;
+          color: $text-main;
+          margin-bottom: 0.75rem;
+          padding-bottom: 0.5rem;
+          border-bottom: 1px solid $border-color;
+        }
+
+        p {
+          font-size: 0.95rem;
+          color: $text-muted;
+          line-height: 1.75;
+          margin-bottom: 0.75rem;
+        }
+
+        ul {
+          list-style: disc;
+          padding-left: 1.5rem;
+          display: flex;
+          flex-direction: column;
+          gap: 0.5rem;
+
+          li {
+            font-size: 0.9rem;
+            color: $text-muted;
+            line-height: 1.7;
+
+            strong {
+              color: $text-main;
+              font-weight: 600;
+            }
+
+            code {
+              font-family: monospace;
+              font-size: 0.85em;
+              background: #f1f5f9;
+              padding: 2px 6px;
+              border-radius: 4px;
+              color: $primary-color;
+            }
+          }
+        }
+      }
+
+      .contact-footer {
+        margin-top: 2rem;
+        padding: 1.25rem 1.5rem;
+        background: #f8fafc;
+        border-radius: 1rem;
+        border: 1px solid $border-color;
+        font-size: 0.9rem;
+        color: $text-muted;
+
+        strong {
+          color: $text-main;
+          font-weight: 600;
+        }
 
         a {
           color: $primary-color;

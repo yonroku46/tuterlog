@@ -18,7 +18,7 @@ export default function NotFound() {
         
         <Link href="/" className="home-link">
           <ArrowLeft size={20} />
-          <span>대시보드로 돌아가기</span>
+          <span>홈으로 돌아가기</span>
         </Link>
       </div>
     </div>

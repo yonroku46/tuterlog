@@ -41,7 +41,7 @@ const AppLayout = ({ children }: { children: React.ReactNode }) => {
   return (
     <div className={`dashboard-layout ${isSidebarOpen ? 'sidebar-open' : ''}`}>
       <div className="mobile-header">
-        <Link href="/" className="logo-link">
+        <Link href="/my/dashboard" className="logo-link">
           <Image 
             src="/assets/icons/favicon.svg" 
             alt="TuterLog Logo" 
