@@ -2,6 +2,7 @@
 
 import React from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
 import { useAuth } from '@/hooks/useAuth';
 import { 
   Calendar, Users, BarChart3,
@@ -58,10 +59,10 @@ const STATS = [
 ];
 
 const AVATARS = [
-  { char: '김', color: '#6366f1' },
-  { char: '이', color: '#8b5cf6' },
-  { char: '박', color: '#06b6d4' },
-  { char: '최', color: '#10b981' },
+  { src: '/assets/avatars/avatar1.webp' },
+  { src: '/assets/avatars/avatar2.webp' },
+  { src: '/assets/avatars/avatar3.webp' },
+  { src: '/assets/avatars/avatar4.webp' },
 ];
 
 const NAV_ITEMS = ['대시보드', '고객 관리', '일정 확인', '설정'];
@@ -101,8 +102,14 @@ export default function LandingPage() {
         <div className="landing-hero-proof">
           <div className="landing-hero-proof-avatars">
             {AVATARS.map((a, i) => (
-              <div key={i} className="landing-hero-proof-avatar" style={{ background: a.color }}>
-                {a.char}
+              <div key={i} className="landing-hero-proof-avatar">
+                <Image 
+                  src={a.src} 
+                  alt={`User avatar ${i + 1}`} 
+                  width={32} 
+                  height={32} 
+                  className="rounded-full"
+                />
               </div>
             ))}
           </div>

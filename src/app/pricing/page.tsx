@@ -80,9 +80,9 @@ function FaqItem({ q, a }: { q: string; a: string }) {
 
 export default function PricingPage() {
   const { user } = useAuth();
-  const [isAnnual, setIsAnnual] = useState(false);
+  const [isAnnual, setIsAnnual] = useState(true);
 
-  const monthlyPrice = 9900;
+  const monthlyPrice = 13200;
   const annualMonthly = Math.floor(monthlyPrice * 0.75);
   const ctaHref = user ? '/my/dashboard' : '/login';
 

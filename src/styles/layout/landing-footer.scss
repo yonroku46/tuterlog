@@ -1,0 +1,51 @@
+// ── LANDING FOOTER ───────────────────────────
+
+.landing-footer {
+  border-top: 1px solid #f1f5f9;
+  padding: 2.5rem 1.5rem;
+
+  @media (max-width: 480px) {
+    padding: 2rem 1rem;
+  }
+}
+
+.landing-footer-inner {
+  max-width: 1160px;
+  margin: 0 auto;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 1rem;
+}
+
+.landing-footer-logo {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 1rem;
+  font-weight: 800;
+  color: #0f172a;
+  text-decoration: none;
+}
+
+.landing-footer-copy {
+  font-size: 0.8rem;
+  color: #94a3b8;
+  margin-top: 0.25rem;
+}
+
+.landing-footer-links {
+  display: flex;
+  gap: 1.25rem;
+  flex-wrap: wrap;
+
+  a {
+    font-size: 0.85rem;
+    color: #64748b;
+    text-decoration: none;
+    transition: color 0.15s;
+
+    &:hover { color: #0f172a; }
+  }
+}

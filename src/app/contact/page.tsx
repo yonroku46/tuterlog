@@ -155,7 +155,7 @@ export default function ContactPage() {
                   <div className="contact-field">
                     <label className="contact-label">문의 유형 *</label>
                     <select
-                      className="contact-input contact-select"
+                      className={`contact-input contact-select ${!form.type ? 'is-placeholder' : ''}`}
                       value={form.type}
                       onChange={update('type')}
                       required
@@ -194,8 +194,7 @@ export default function ContactPage() {
                   <div className="contact-submit-row">
                     <p className="contact-privacy-note">
                       제출 시{' '}
-                      <Link href="/docs/privacy">개인정보처리방침</Link>에<br />
-                      동의한 것으로 간주됩니다.
+                      <Link href="/docs/privacy">개인정보처리방침</Link>에 동의한 것으로 간주됩니다.
                     </p>
                     <button
                       type="submit"
@@ -203,9 +202,9 @@ export default function ContactPage() {
                       disabled={!isValid || sending}
                     >
                       {sending ? (
-                        <><Loader2 size={16} className="animate-spin" /> 열리는 중...</>
+                        <><Loader2 size={16} className="animate-spin" /> 전송중...</>
                       ) : (
-                        <><Send size={16} /> 문의 메일 열기</>
+                        <><Send size={16} /> 문의 메일 전송</>
                       )}
                     </button>
                   </div>

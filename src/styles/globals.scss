@@ -2,6 +2,8 @@
 @use "./base/mixins" as *;
 @use "./components/table" as *;
 @use "./components/MonthPicker";
+@use "./layout/landing-nav";
+@use "./layout/landing-footer";
 
 :root {
   --background: #ffffff;
