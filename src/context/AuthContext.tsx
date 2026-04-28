@@ -74,7 +74,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const googleLogin = useGoogleLogin({
     flow: 'auth-code',
-    scope: 'openid email profile https://www.googleapis.com/auth/calendar.readonly',
+    scope: 'openid email profile https://www.googleapis.com/auth/calendar.events',
     onSuccess: async ({ code }) => {
       try {
         const response = await fetch('/api/auth/exchange', {
@@ -180,7 +180,17 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       logout();
       router.push("/login");
     };
+
+    const handleLoginRedirect = (e: MouseEvent) => {
+      const target = e.target as HTMLElement;
+      const anchor = target.closest('a');
+      if (anchor && anchor.getAttribute('href') === '/login') {
+        sessionStorage.setItem('returnUrl', window.location.pathname);
+      }
+    };
+
     window.addEventListener('auth-session-expired', handleSessionExpired);
+    window.addEventListener('click', handleLoginRedirect);
 
     const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
       setUser(firebaseUser);
@@ -215,6 +225,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     return () => {
       unsubscribe();
       window.removeEventListener('auth-session-expired', handleSessionExpired);
+      window.removeEventListener('click', handleLoginRedirect);
     };
   }, [router, refreshGoogleAccessToken]);
 

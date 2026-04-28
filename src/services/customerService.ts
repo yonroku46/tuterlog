@@ -27,6 +27,7 @@ export interface Customer {
   unitPrice?: number;
   ownerId?: string;
   createdAt?: any;
+  isShared?: boolean;
 }
 
 export interface ClassSession {
@@ -43,40 +44,109 @@ let lastFetchTime = 0;
 const FETCH_COOLDOWN = 3000; 
 
 export const customerService = {
-  // 고객 목록 조회 (각 유저의 개인 폴더를 최우선으로 조회)
+  // 소속(Organization) ID 가져오기
+  async getUserOrgId(userId: string): Promise<string> {
+    if (!userId) return "";
+    try {
+      const userDoc = await getDoc(doc(db, "users", userId));
+      let orgId = userId;
+      if (userDoc.exists() && userDoc.data().organizationId) {
+        orgId = userDoc.data().organizationId;
+      }
+
+      // 소속장이 내가 아닌 경우, 소속장 쪽의 member_ 리스트에 아직 있는지 확인 (강제 퇴출 처리용)
+      if (orgId !== userId) {
+        try {
+          const mDoc = await getDoc(doc(db, "users", orgId, "customers", "member_" + userId));
+          if (!mDoc.exists()) {
+            return userId; // 소속장이 퇴출했으므로 내 개인 모드로 폴백
+          }
+        } catch (e) {} // 권한 등으로 에러 시 무시
+      }
+
+      return orgId;
+    } catch (e) {
+      console.error(e);
+    }
+    return userId; // 기본적으로 자기 자신이 소속장
+  },
+
+  // 소속원 목록 가져오기 (마스터용)
+  async getOrganizationMembers(orgId: string): Promise<any[]> {
+    try {
+      const q = query(collection(db, "users"), where("organizationId", "==", orgId));
+      const snap = await getDocs(q);
+      return snap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+    } catch (error) {
+      console.error("소속원 조회 에러:", error);
+      return [];
+    }
+  },
+
+  // 고객 목록 조회 (플랫 구조 기반)
   async getCustomers(userId: string): Promise<Customer[]> {
     if (!userId) return [];
     try {
-      // 1. [핵심] 해당 유저의 개인 폴더만 조회 (본인이 직접 쓴 것처럼 보이게 함)
-      const customersRef = collection(db, "users", userId, "customers");
-      const snapshot = await getDocs(customersRef);
+      const orgId = await this.getUserOrgId(userId);
+      const isMaster = orgId === userId;
       
-      const data = snapshot.docs
-        .filter(d => d.id !== 'config') // 설정 제외
-        .map(doc => ({ id: doc.id, ...doc.data() }));
+      // 1. 루트 고객 폴더에서 소속 고객 모두 조회
+      const rootQ_org = query(collection(db, "customers"), where("organizationId", "==", orgId));
+      let rootDocs: any[] = [];
+      try {
+        const rootSnap = await getDocs(rootQ_org);
+        rootDocs = rootSnap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+      } catch (e) {
+        console.warn("루트 폴더 조회 실패:", e);
+      }
 
-      // 2. 혹시나 루트에 남아있을지 모르는 내 데이터도 합쳐서 조회 (과기 과도기 대응)
-      const rootQ = query(collection(db, "customers"), where("ownerId", "==", userId));
-      const rootSnapshot = await getDocs(rootQ);
-      const rootData = rootSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+      // 1-5. 예전 버전에서 생성되어 organizationId가 없는 루트 고객 조회 (유실 방지)
+      const rootQ_owner = query(collection(db, "customers"), where("ownerId", "==", userId));
+      try {
+        const rootOwnerSnap = await getDocs(rootQ_owner);
+        rootOwnerSnap.docs.forEach(doc => {
+          if (!rootDocs.some(rd => rd.id === doc.id)) {
+            rootDocs.push({ id: doc.id, ...doc.data() });
+          }
+        });
+      } catch (e) {}
 
-      const combined = [...data];
-      rootData.forEach(rd => {
-        if (!combined.some(cd => cd.id === rd.id)) combined.push(rd);
+      // 2. 기존 개인 폴더의 고객 조회 (과도기 및 권한 에러 폴백)
+      const myQ = collection(db, "users", userId, "customers");
+      let myDocs: any[] = [];
+      try {
+        const mySnap = await getDocs(myQ);
+        myDocs = mySnap.docs
+          .filter(d => d.id !== 'config' && !d.id.startsWith('member_'))
+          .map(doc => ({ id: doc.id, ...doc.data() }));
+      } catch (e) {}
+
+      // 병합 및 중복 제거
+      const combined = [...rootDocs];
+      myDocs.forEach(md => {
+        if (!combined.some(cd => cd.id === md.id)) combined.push(md);
       });
 
-      return combined.sort((a: any, b: any) => {
+      const parsedData = combined as Customer[];
+      let filteredData = parsedData;
+
+      // 소속장이 아니면(소속원이면) 내 고객이거나 공유된 고객만 보임
+      if (!isMaster) {
+        filteredData = parsedData.filter(c => c.ownerId === userId || c.isShared === true);
+      }
+
+      return filteredData.sort((a: any, b: any) => {
         const dA = (a.createdAt?.toDate?.() || new Date(0)).getTime();
         const dB = (b.createdAt?.toDate?.() || new Date(0)).getTime();
         return dB - dA;
-      }) as Customer[];
+      });
     } catch (error) {
       console.error("고객 조회 에러:", error);
       return [];
     }
   },
 
-  // 전체 유저 목록 (관리자용)
+  // 전체 유저 목록 (마스터가 소속원 초대시 사용 가능)
   async getAllUsers(): Promise<any[]> {
     const now = Date.now();
     if (now - lastFetchTime < FETCH_COOLDOWN && (window as any)._cachedUsers) return (window as any)._cachedUsers;
@@ -87,113 +157,59 @@ export const customerService = {
         const d = doc.data() as any;
         return { id: doc.id, name: d.name || d.displayName || "", email: d.email || "" };
       });
-
-      const groupS = await getDocs(collectionGroup(db, "customers"));
-      const foundUids = new Set<string>();
-      groupS.forEach(d => {
-        const parts = d.ref.path.split('/');
-        if (parts[0] === 'users' && parts[1]) foundUids.add(parts[1]);
-        const data = d.data() as any;
-        if (data.ownerId) foundUids.add(data.ownerId);
-      });
-
-      const finalUsers: any[] = [...users.filter(u => u.name && u.email && u.email.includes('@'))];
-      const promises = Array.from(foundUids).map(async (uid) => {
-        if (finalUsers.some(u => u.id === uid)) return null;
-        let name = "", email = "", refreshToken = "";
-        try {
-          const snap = await getDoc(doc(db, "users", uid, "customers", "config"));
-          if (snap.exists()) {
-            const d = snap.data() as any;
-            name = d.name || d.displayName || d.userName || "";
-            email = d.email || d.userEmail || "";
-            refreshToken = d.googleRefreshToken || "";
-          }
-        } catch (e) {}
-
-        if ((!email || !email.includes('@')) && refreshToken) {
-          try {
-            const res = await fetch('/api/admin/resolve-email', {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({ refreshToken })
-            });
-            if (res.ok) {
-              const info = await res.json();
-              if (info.email) { email = info.email; name = info.name || email.split('@')[0]; }
-            }
-          } catch (err) {}
-        }
-        if (!name) name = email && email.includes('@') ? email.split('@')[0] : `유저(${uid.slice(-4)})`;
-        if (!email) email = "이메일 미확인";
-        return { id: uid, name, email };
-      });
-
-      const discovered = await Promise.all(promises);
-      discovered.forEach(u => { if (u) finalUsers.push(u); });
-      const results = finalUsers.filter((v, i, a) => a.findIndex(t => t.id === v.id) === i);
+      const results = users.filter((v, i, a) => a.findIndex(t => t.id === v.id) === i);
       (window as any)._cachedUsers = results;
       lastFetchTime = Date.now();
       return results;
     } catch (error) { return []; }
   },
 
-  // 고객 추가 (개인 폴더 직배송)
+  // 고객 추가 (루트 폴더)
   async addCustomer(userId: string, customerData: Omit<Customer, 'id' | 'createdAt'>) {
-    const targetUserId = customerData.ownerId || userId;
-    const customersRef = collection(db, "users", targetUserId, "customers");
-    return await addDoc(customersRef, {
+    const orgId = await this.getUserOrgId(userId);
+    
+    // 루트 폴더에 저장 (플랫 구조)
+    const customersRef = collection(db, "customers");
+    const dRef = await addDoc(customersRef, {
       ...customerData,
-      ownerId: targetUserId,
+      ownerId: userId,
+      organizationId: orgId,
       createdAt: serverTimestamp(),
       totalSessions: 0
     });
+
+    // 혹시 모를 기존 구버전 코드 호환성을 위해 내 폴더에도 저장
+    await setDoc(doc(db, "users", userId, "customers", dRef.id), {
+      ...customerData,
+      ownerId: userId,
+      organizationId: orgId,
+      createdAt: serverTimestamp(),
+      totalSessions: 0
+    }).catch(() => {});
+
+    return dRef;
   },
 
-  // 고객 이관 (물리적 폴더 이동 + 서브컬렉션 이사)
+  // 고객 정보 수정 (양쪽 폴더 모두 덮어쓰기)
   async updateCustomer(userId: string, customerId: string, customerData: Partial<Customer>) {
     try {
-      const targetUserId = customerData.ownerId || userId;
-      
-      if (customerData.ownerId && customerData.ownerId !== userId) {
-        let full: any = null;
-        const oldRef = doc(db, "users", userId, "customers", customerId);
-        const rootRef = doc(db, "customers", customerId);
-        const [oldSnap, rootSnap] = await Promise.all([getDoc(oldRef), getDoc(rootRef)]);
-        
-        if (oldSnap.exists()) full = oldSnap.data();
-        else if (rootSnap.exists()) full = rootSnap.data();
+      const orgId = await this.getUserOrgId(userId);
+      const updateData = { ...customerData, organizationId: orgId, updatedAt: serverTimestamp() };
 
-        if (full) {
-          const newRef = doc(db, "users", targetUserId, "customers", customerId);
-          await setDoc(newRef, {
-            ...full,
-            ...customerData,
-            updatedAt: serverTimestamp()
-          });
+      // 1. 루트 폴더 업데이트
+      const rootRef = doc(db, "customers", customerId);
+      await updateDoc(rootRef, updateData).catch(() => {
+        // 루트 폴더에 문서가 없으면 생성 시도
+        setDoc(rootRef, updateData, { merge: true }).catch(() => {});
+      });
 
-          // 💡 [핵심] 수업 기록(sessions) 서브컬렉션도 함께 이사
-          const oldSessionsRef = collection(db, "users", userId, "customers", customerId, "sessions");
-          const sessSnap = await getDocs(oldSessionsRef);
-          
-          await Promise.all(sessSnap.docs.map(async (sDoc) => {
-            const newSessRef = doc(db, "users", targetUserId, "customers", customerId, "sessions", sDoc.id);
-            await setDoc(newSessRef, sDoc.data());
-            await deleteDoc(sDoc.ref); // 원본 삭제
-          }));
-
-          await deleteDoc(oldRef).catch(() => {});
-          await deleteDoc(rootRef).catch(() => {});
-          return;
-        }
-      }
-
+      // 2. 내 폴더 업데이트 (과거 데이터 호환)
       const myRef = doc(db, "users", userId, "customers", customerId);
-      try {
-        await updateDoc(myRef, { ...customerData, updatedAt: serverTimestamp() });
-      } catch (e) {
-        const rootRef = doc(db, "customers", customerId);
-        await updateDoc(rootRef, { ...customerData, updatedAt: serverTimestamp() });
+      await updateDoc(myRef, updateData).catch(() => {});
+      
+      // 3. 소속장의 폴더에도 혹시 복사본이 있다면 업데이트 (이전 동기화 호환)
+      if (orgId !== userId) {
+        await updateDoc(doc(db, "users", orgId, "customers", customerId), updateData).catch(() => {});
       }
     } catch (error) {
       console.error("업데이트 에러:", error);
@@ -201,35 +217,60 @@ export const customerService = {
     }
   },
 
-  // 삭제
+  // 삭제 (양쪽 모두 삭제)
   async deleteCustomer(userId: string, customerId: string) {
-    await deleteDoc(doc(db, "users", userId, "customers", customerId)).catch(() => {});
+    const orgId = await this.getUserOrgId(userId);
+    
+    // 루트 폴더 삭제
     await deleteDoc(doc(db, "customers", customerId)).catch(() => {});
+    
+    // 내 폴더 삭제
+    await deleteDoc(doc(db, "users", userId, "customers", customerId)).catch(() => {});
+    
+    // 소속장 폴더 삭제 (이전 동기화 호환)
+    if (orgId !== userId) {
+      await deleteDoc(doc(db, "users", orgId, "customers", customerId)).catch(() => {});
+    }
   },
 
   async recordClassSession(userId: string, customerId: string, session: any) {
-    const sessionsRef = collection(db, "users", userId, "customers", customerId, "sessions");
-    // 미래를 위해 customerId를 문서 내부에 포함
+    const orgId = await this.getUserOrgId(userId);
+    
+    // 루트 sessions 컬렉션에 추가
+    const sessionsRef = collection(db, "sessions");
     const dRef = await addDoc(sessionsRef, { 
       ...session, 
       userId, 
       customerId,
+      organizationId: orgId,
       completedAt: serverTimestamp() 
     });
     
-    const ref = doc(db, "users", userId, "customers", customerId);
-    const snap = await getDoc(ref);
-    if (snap.exists()) {
-      await updateDoc(ref, { totalSessions: ((snap.data() as any).totalSessions || 0) + 1 });
-    }
+    // 호환성을 위해 내 폴더에도 기록 시도
+    await setDoc(doc(db, "users", userId, "customers", customerId, "sessions", dRef.id), { 
+      ...session, userId, customerId, completedAt: serverTimestamp() 
+    }).catch(() => {});
+
+    // 루트 고객 횟수 업데이트
+    const rootCRef = doc(db, "customers", customerId);
+    getDoc(rootCRef).then(s => {
+      if (s.exists()) updateDoc(rootCRef, { totalSessions: ((s.data() as any).totalSessions || 0) + 1 }).catch(() => {});
+    }).catch(() => {});
+
+    // 내 폴더 고객 횟수 업데이트
+    const myCRef = doc(db, "users", userId, "customers", customerId);
+    getDoc(myCRef).then(s => {
+      if (s.exists()) updateDoc(myCRef, { totalSessions: ((s.data() as any).totalSessions || 0) + 1 }).catch(() => {});
+    }).catch(() => {});
+
     return dRef;
   },
 
   async getClassHistory(userId: string, customerId: string): Promise<ClassSession[]> {
     try {
-      // 대시보드와 동일한 쿼리 사용 (인덱스 보장됨)
+      // 모든 세션을 customerId 기준으로 싹 가져옵니다. (루트든 하위든 상관없이)
       const sessionsRef = collectionGroup(db, "sessions");
-      const q = query(sessionsRef, where("userId", "==", userId));
+      const q = query(sessionsRef, where("customerId", "==", customerId));
       const snap = await getDocs(q);
       
       const filtered = snap.docs
@@ -238,15 +279,12 @@ export const customerService = {
           const cid = s.customerId;
           const path = d.ref.path;
           
-          // 1. 문서 내부의 customerId 필드로 매칭
           if (cid === customerId) return true;
-          // 2. 데이터베이스 경로상에 포함된 ID로 매칭 (가장 확실함)
           if (path.includes(`customers/${customerId}/`)) return true;
           return false;
         })
         .map(d => ({ id: d.id, ...d.data() }));
 
-      // 문서 ID가 동일한 경우 하나만 남김 (이관 시 중복 생성 방지)
       const uniqueSessions = Array.from(
         new Map(filtered.map(s => [s.id, s])).values()
       );
@@ -263,15 +301,25 @@ export const customerService = {
   },
 
   async deleteClassSession(userId: string, customerId: string, sessionId: string) {
-    const ref = doc(db, "users", userId, "customers", customerId, "sessions", sessionId);
-    await deleteDoc(ref).catch(() => {});
+    // 루트 삭제
+    const rootSessRef = doc(db, "sessions", sessionId);
+    await deleteDoc(rootSessRef).catch(() => {});
     
-    // 횟수 차감
-    const cRef = doc(db, "users", userId, "customers", customerId);
-    const cSnap = await getDoc(cRef);
-    if (cSnap.exists()) {
-      await updateDoc(cRef, { totalSessions: Math.max(0, ((cSnap.data() as any).totalSessions || 0) - 1) });
-    }
+    // 구 데이터 삭제
+    const mySessRef = doc(db, "users", userId, "customers", customerId, "sessions", sessionId);
+    await deleteDoc(mySessRef).catch(() => {});
+    
+    // 루트 고객 횟수 차감
+    const rootCRef = doc(db, "customers", customerId);
+    getDoc(rootCRef).then(s => {
+      if (s.exists()) updateDoc(rootCRef, { totalSessions: Math.max(0, ((s.data() as any).totalSessions || 0) - 1) }).catch(() => {});
+    }).catch(() => {});
+
+    // 내 폴더 횟수 차감
+    const myCRef = doc(db, "users", userId, "customers", customerId);
+    getDoc(myCRef).then(s => {
+      if (s.exists()) updateDoc(myCRef, { totalSessions: Math.max(0, ((s.data() as any).totalSessions || 0) - 1) }).catch(() => {});
+    }).catch(() => {});
   },
 
   // 최근 세션 목록 (대시보드용)

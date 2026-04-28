@@ -13,7 +13,13 @@ export default function LoginPage() {
 
   useEffect(() => {
     if (user) {
-      router.push('/my/dashboard');
+      const returnUrl = sessionStorage.getItem('returnUrl');
+      if (returnUrl) {
+        sessionStorage.removeItem('returnUrl');
+        router.replace(returnUrl);
+      } else {
+        router.push('/my/dashboard');
+      }
     }
   }, [user, router]);
 

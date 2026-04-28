@@ -37,11 +37,6 @@ const CustomersPage = () => {
   const [historyCustomer, setHistoryCustomer] = useState<Customer | null>(null);
   const [isHistoryLoading, setIsHistoryLoading] = useState(false);
   const [sortConfig, setSortConfig] = useState<{ key: string; direction: 'asc' | 'desc' } | null>({ key: 'date', direction: 'desc' });
-  const [systemUsers, setSystemUsers] = useState<any[]>([]);
-  const [selectedRecipientId, setSelectedRecipientId] = useState<string>('');
-
-  const ADMIN_EMAIL = 'mikmatoba@gmail.com'; 
-  const isAdmin = user?.email === ADMIN_EMAIL;
 
   useEffect(() => {
     const search = searchParams?.get('search');
@@ -92,21 +87,16 @@ const CustomersPage = () => {
   useEffect(() => {
     if (user) {
       fetchCustomers();
-      if (user.email === ADMIN_EMAIL) {
-        customerService.getAllUsers().then(setSystemUsers).catch(console.error);
-      }
     }
   }, [user]);
 
   const handleAdd = () => {
     setCurrentCustomer({ name: '', nickname: '', phone: '', color: '#4f46e5', unitPrice: 0 });
-    setSelectedRecipientId(user?.uid || '');
     setIsModalOpen(true);
   };
 
   const handleEdit = (customer: Customer) => {
     setCurrentCustomer(customer);
-    setSelectedRecipientId(customer.ownerId || user?.uid || '');
     setIsModalOpen(true);
   };
 
@@ -202,15 +192,13 @@ const CustomersPage = () => {
     if (!user || !currentCustomer) return;
 
     try {
-      const finalOwnerId = isAdmin && selectedRecipientId ? selectedRecipientId : user.uid;
-      const isTransferring = finalOwnerId !== user.uid;
-      
       if (currentCustomer.id) {
         await customerService.updateCustomer(user.uid, currentCustomer.id, {
           ...currentCustomer,
-          ownerId: finalOwnerId
+          ownerId: user.uid,
+          isShared: currentCustomer.isShared || false
         });
-        alert(isTransferring ? "고객 정보가 해당 유저에게 성공적으로 전송되었습니다." : "고객 정보가 수정되었습니다.");
+        alert("고객 정보가 수정되었습니다.");
       } else {
         await customerService.addCustomer(user.uid, {
           name: currentCustomer.name || '',
@@ -219,9 +207,10 @@ const CustomersPage = () => {
           color: currentCustomer.color || '#4f46e5',
           unitPrice: currentCustomer.unitPrice || 0,
           memo: currentCustomer.memo || '',
-          ownerId: finalOwnerId
+          ownerId: user.uid,
+          isShared: currentCustomer.isShared || false
         });
-        alert(isTransferring ? "신규 고객 정보가 해당 유저에게 성공적으로 전송되었습니다." : "새로운 고객이 성공적으로 등록되었습니다.");
+        alert("새로운 고객이 성공적으로 등록되었습니다.");
       }
       setIsModalOpen(false);
       fetchCustomers();
@@ -460,46 +449,34 @@ const CustomersPage = () => {
                 />
               </div>
 
-              {isAdmin && (
-                <div className="admin-send-area" style={{ 
-                  marginTop: '15px', 
-                  padding: '15px', 
-                  backgroundColor: 'rgba(79, 70, 229, 0.05)', 
-                  borderRadius: '12px',
-                  border: '1px dashed rgba(79, 70, 229, 0.2)',
-                  marginBottom: '15px'
-                }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '10px', color: '#4f46e5', fontWeight: 'bold', fontSize: '14px' }}>
-                    <Users size={18} />
-                    전송 대상 선택 및 이메일 관리
-                  </div>
-                  <select 
-                    value={selectedRecipientId}
-                    onChange={(e) => setSelectedRecipientId(e.target.value)}
-                    style={{ 
-                      width: '100%', 
-                      padding: '10px', 
-                      borderRadius: '8px', 
-                      border: '1px solid #ddd',
-                      backgroundColor: '#fff',
-                      fontSize: '14px'
-                    }}
-                  >
-                    <option value={user?.uid || ''}>내가 가지기 (저장)</option>
-                    {systemUsers.filter(su => su.id !== user?.uid).map((su) => (
-                      <option key={su.id} value={su.id}>
-                        {su.name} ({su.email})
-                      </option>
-                    ))}
-                  </select>
+              <div className="form-group" style={{ 
+                marginTop: '15px', 
+                padding: '15px', 
+                backgroundColor: 'rgba(79, 70, 229, 0.05)', 
+                borderRadius: '12px',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between'
+              }}>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                  <label style={{ margin: 0, color: '#4f46e5', fontWeight: 'bold' }}>소속원에게 고객 공유</label>
+                  <span style={{ fontSize: '13px', color: '#64748b' }}>초대된 소속원들도 이 고객을 볼 수 있도록 허용합니다.</span>
                 </div>
-              )}
-              
+                <label className="toggle-switch">
+                  <input 
+                    type="checkbox" 
+                    checked={currentCustomer?.isShared || false} 
+                    onChange={(e) => setCurrentCustomer(prev => prev ? {...prev, isShared: e.target.checked} : null)}
+                  />
+                  <span className="slider round"></span>
+                </label>
+              </div>
+
               <div className="modal-actions" style={{ display: 'flex', gap: '10px', marginTop: '20px' }}>
                 <button type="button" className="btn-cancel" onClick={() => setIsModalOpen(false)} style={{ flex: 1 }}>취소</button>
                 <button type="submit" className="btn-submit" style={{ 
                   flex: 1, 
-                  backgroundColor: selectedRecipientId !== user?.uid ? '#10b981' : '#4f46e5',
+                  backgroundColor: '#4f46e5',
                   color: 'white',
                   padding: '10px',
                   borderRadius: '8px',
@@ -507,7 +484,7 @@ const CustomersPage = () => {
                   fontWeight: 'bold',
                   cursor: 'pointer'
                 }}>
-                  {selectedRecipientId !== user?.uid ? (currentCustomer?.id ? '변경하여 전송' : '보내기') : '저장하기'}
+                  저장하기
                 </button>
               </div>
             </form>

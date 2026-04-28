@@ -60,5 +60,26 @@ export const googleCalendarService = {
     return items.filter((item: any) => 
       item.summary && item.summary.toLowerCase().includes(keyword.toLowerCase())
     ).length;
+  },
+
+  async createEvent(accessToken: string, eventDetails: any): Promise<any> {
+    const url = 'https://www.googleapis.com/calendar/v3/calendars/primary/events?sendUpdates=all';
+    
+    const response = await fetch(url, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${accessToken}`,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify(eventDetails)
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}));
+      console.error('Google API Create Event Error:', errorData);
+      throw new Error(`Google API 오류 (${response.status}): ${errorData.error?.message || '일정을 생성할 수 없습니다.'}`);
+    }
+
+    return response.json();
   }
 };
