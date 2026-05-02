@@ -74,7 +74,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const googleLogin = useGoogleLogin({
     flow: 'auth-code',
-    scope: 'openid email profile https://www.googleapis.com/auth/calendar.events',
+    scope: 'openid https://www.googleapis.com/auth/userinfo.email https://www.googleapis.com/auth/userinfo.profile https://www.googleapis.com/auth/calendar.readonly https://www.googleapis.com/auth/calendar.events.owned https://www.googleapis.com/auth/calendar.events.owned.readonly',
     onSuccess: async ({ code }) => {
       try {
         const response = await fetch('/api/auth/exchange', {

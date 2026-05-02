@@ -15,7 +15,11 @@ let app: FirebaseApp;
 let auth: Auth;
 let db: Firestore;
 const googleProvider = new GoogleAuthProvider();
+googleProvider.addScope('https://www.googleapis.com/auth/userinfo.email');
+googleProvider.addScope('https://www.googleapis.com/auth/userinfo.profile');
 googleProvider.addScope('https://www.googleapis.com/auth/calendar.readonly');
+googleProvider.addScope('https://www.googleapis.com/auth/calendar.events.owned');
+googleProvider.addScope('https://www.googleapis.com/auth/calendar.events.owned.readonly');
 googleProvider.setCustomParameters({
   access_type: 'offline',
   prompt: 'consent'
